@@ -62,3 +62,92 @@ achievement-reward-money: "&a获得成就奖励: {0} 金币"
 crop-type-not-found: "&c未知的作物类型: {0}"
 crop-not-in-plot: "&c该位置不在你的地块范围内"
 crop-position-occupied: "&c该位置已有作物"
+
+# ==================== 收割模块 ====================
+harvest-plant-success: "&a成功种植了 {0}！"
+harvest-not-own-plot: "&c你只能在自己的地块上种植作物"
+harvest-position-occupied: "&c该位置已有作物，无法种植"
+harvest-unknown-seed: "&c无法识别该种子类型"
+harvest-not-farmland: "&c只能在耕地上种植作物"
+harvest-crop-not-mature: "&c这株作物尚未成熟"
+harvest-success: "&a成功收获了 {0} x{1}！"
+harvest-no-crop-here: "&c这里没有作物"
+harvest-bonemeal-success: "&a使用骨粉加速了作物生长！"
+harvest-bonemeal-already-mature: "&c这株作物已经成熟，无需使用骨粉"
+harvest-auto-harvest-stored: "&a自动收割完成！{0} 种作物产出已存入农场仓库"
+harvest-not-in-farm-world: "&c你不在农场世界中"
+
+# ==================== 偷菜管理器 ====================
+steal-no-permission: "&c你没有偷菜权限！"
+steal-not-others-farm: "&c你只能在他人农场偷菜"
+steal-crop-not-mature: "&c这株作物还没成熟，不能偷取"
+steal-cooldown-remaining: "&c你对该农场主的偷菜冷却尚未结束，剩余 {0}"
+steal-limit-reached: "&c你已达到对该农场主的偷取上限，冷却已开始"
+steal-success: "&a成功偷取了 {0} 个 {1}！"
+steal-victim-online-notify: "&c[Farm] {0} 刚刚从你的农场偷走了 {1} 个 {2}！"
+steal-trap-triggered: "&c你在偷菜时触发了陷阱！"
+steal-no-crop-at-position: "&c该位置没有作物"
+steal-remove-failed: "&c偷取失败，请稍后再试"
+
+# ==================== 商店模块 ====================
+shop-sell-success: "&a成功出售 {0}x{1}，获得 {2} 金币"
+shop-sell-failed-no-item: "&c你的背包中没有可出售的 {0}"
+shop-sell-failed-not-enough: "&c你的背包中 {0} 数量不足，需要 {1} 个，当前 {2} 个"
+shop-sell-failed-deposit: "&c金币发放失败，请联系管理员"
+shop-sell-failed-no-price: "&c该作物 {0} 没有配置收购价格"
+shop-sell-failed-vault: "&cVault 经济系统不可用，无法出售"
+shop-sell-failed-amount-invalid: "&c出售数量无效，最大单次出售数量为 {0}"
+shop-sell-failed-crop-unknown: "&c未知的作物类型: {0}"
+shop-npc-interact: "&e正在打开收购站..."
+
+# ==================== 好友交互模块 ====================
+friendinteraction-water-success: "&a你为 {0} 的作物浇了水，加速了 {1} 秒生长！"
+friendinteraction-water-notify-owner: "&a好友 {0} 为你的作物浇了水！"
+friendinteraction-water-cooldown: "&c你对 {0} 的浇水冷却尚未结束，剩余 {1}"
+friendinteraction-water-not-friend: "&c你和该农场主不是好友关系，无法浇水"
+friendinteraction-water-own-farm: "&c你不能在自己的农场浇水"
+friendinteraction-water-no-crop: "&c该位置没有作物"
+friendinteraction-water-already-mature: "&c该作物已经成熟，无需浇水"
+friendinteraction-water-failed: "&c浇水失败，请稍后再试"
+friendinteraction-water-no-plot: "&c该位置不属于任何农场地块"
+
+# ==================== 农场传送模块 ====================
+farmteleport-welcome:
+  - type: sound
+    sound: entity.player.levelup
+    volume: 1.0
+    pitch: 1.2
+  - type: title
+    title: '&6欢迎来到农场！'
+    subtitle: '&7你的专属地块已准备就绪'
+    fadein: 10
+    stay: 60
+    fadeout: 20
+  - type: text
+    text: '&a[Farm] 欢迎来到你的农场！已为你发放新手种子礼包，快开始种植吧！'
+farmteleport-return-own:
+  - type: sound
+    sound: entity.enderman.teleport
+    volume: 1.0
+    pitch: 1.0
+  - type: text
+    text: '&a[Farm] 欢迎回到你的农场！作物生长状态已更新。'
+farmteleport-enter-other: '&e[Farm] 你已传送到 {0} 的农场。'
+farmteleport-no-permission: '&c[Farm] 你没有传送到他人农场的权限！'
+farmteleport-target-no-plot: '&c[Farm] 目标玩家 {0} 还没有农场地块。'
+farmteleport-teleporting: '&e[Farm] 正在传送到农场...'
+farmteleport-starter-kit: '&a[Farm] 已发放新手种子礼包到你的背包！'
+farmteleport-leave-farm: '&7[Farm] 你已离开农场世界。'
+farmteleport-player-not-found: '&c[Farm] 未找到玩家 {0}。'
+farmteleport-already-in-farm: '&e[Farm] 你已经在该农场中了。'
+
+# ==================== 管理模块 ====================
+admin-no-permission: "&c你没有权限执行此操作"
+admin-player-not-found: "&c未找到玩家: {0}"
+admin-target-no-plot: "&c目标玩家 {0} 没有农场地块"
+admin-reset-confirm: "&e即将重置玩家 {0} 的农场，请在 5 秒内再次执行以确认"
+admin-reset-success: "&a已成功重置玩家 {0} 的农场"
+admin-reset-failed: "&c重置玩家 {0} 的农场时发生错误"
+admin-setlevel-success: "&a已将玩家 {0} 的农场等级设置为 {1}"
+admin-setlevel-invalid: "&c无效的等级值: {0}，有效范围: 1-{1}"
+admin-reload-success: "&a所有模块配置已重载"

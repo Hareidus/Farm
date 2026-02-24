@@ -1,0 +1,13 @@
+# harvest_manager 配置
+
+# 骨粉加速时长（毫秒）
+bonemeal-acceleration-ms: 60000
+
+# 收割粒子效果
+harvest-particle: VILLAGER_HAPPY
+
+# 骨粉粒子效果
+bonemeal-particle: VILLAGER_HAPPY
+
+# 粒子数量
+particle-count: 10

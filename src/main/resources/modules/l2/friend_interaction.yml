@@ -1,0 +1,8 @@
+# 浇水加速时长（毫秒）
+water-acceleration-ms: 120000
+
+# 浇水冷却时长（毫秒，对同一农场主）
+water-cooldown-ms: 3600000
+
+# 浇水粒子效果
+water-particle: "WATER_SPLASH"

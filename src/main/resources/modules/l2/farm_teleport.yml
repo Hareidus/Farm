@@ -1,0 +1,16 @@
+# ==================== 农场传送配置 ====================
+
+# 传送点方块类型（主世界中的传送触发方块）
+teleport-block: "ENDER_PORTAL_FRAME"
+
+# 传送到他人农场的权限节点
+permission-teleport: "stealfarm.teleport"
+
+# 新手礼包（物品ID: 数量）
+starter-kit:
+  WHEAT_SEEDS: 16
+  CARROT: 8
+  POTATO: 8
+
+# 传送延迟（tick，0 = 立即传送）
+teleport-delay: 0
