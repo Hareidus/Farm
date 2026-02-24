@@ -11,8 +11,8 @@ database:
     port: 3306
     user: root
     password: ''
-    database: my_plugin
+    database: farm
 
 # ==================== 通用配置 ====================
 general:
-  prefix: '&b[MyPlugin] &f'
+  prefix: '&b[Farm] &f'

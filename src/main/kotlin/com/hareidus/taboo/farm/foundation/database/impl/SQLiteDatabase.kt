@@ -1,11 +1,10 @@
-package com.hareidus.cobble.foundation.database.impl
+package com.hareidus.taboo.farm.foundation.database.impl
 
-import com.hareidus.cobble.foundation.config.MainConfig
-import com.hareidus.cobble.foundation.database.DatabaseType
-import com.hareidus.cobble.foundation.database.IDatabase
+import com.hareidus.taboo.farm.foundation.config.MainConfig
+import com.hareidus.taboo.farm.foundation.database.DatabaseType
+import com.hareidus.taboo.farm.foundation.database.IDatabase
 import taboolib.common.platform.function.getDataFolder
-import taboolib.module.database.Host
-import taboolib.module.database.SQLite
+import taboolib.module.database.*
 import java.io.File
 import javax.sql.DataSource
 

@@ -27,7 +27,6 @@ taboolib {
         install(BukkitNMSUtil)
         install(BukkitUI)
         install(Database)
-        install(Kether)
         install(CommandHelper)
         install(DatabasePlayer)
     }
@@ -36,14 +35,10 @@ taboolib {
         isSkipKotlinRelocate = true
         isSkipKotlin = true
     }
-    relocate("EasyLib", "com.hareidus.cobble.PROJECT_NAME.libs.EasyLib")
+    relocate("EasyLib", "com.hareidus.taboo.farm.libs.EasyLib")
 }
 
 repositories {
-    maven {
-        name = "cobblemonReleases"
-        url = uri("https://artefacts.cobblemon.com/releases")
-    }
     mavenCentral()
     maven("https://maven.aliyun.com/repository/public")
     maven("https://maven.aliyun.com/repository/central")
@@ -51,9 +46,6 @@ repositories {
         url = uri("https://nexus.maplex.top/repository/maven-public/")
         isAllowInsecureProtocol = true
     }
-    maven("https://maven.fabricmc.net/")
-    maven("https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/")
-    maven("https://maven.impactdev.net/repository/development/")
 }
 
 dependencies {
@@ -69,10 +61,7 @@ dependencies {
 
 tasks.processResources {
     inputs.property("version", project.version)
-    inputs.property("minecraft_version", project.property("minecraft_version"))
-    inputs.property("loader_version", project.property("loader_version"))
     filteringCharset = "UTF-8"
-
 }
 
 tasks.withType<JavaCompile>().configureEach {
@@ -82,12 +71,6 @@ tasks.withType<JavaCompile>().configureEach {
 
 tasks.withType<KotlinCompile>().configureEach {
     compilerOptions.jvmTarget.set(JvmTarget.fromTarget(targetJavaVersion.toString()))
-}
-
-tasks.jar {
-    from("LICENSE") {
-        rename { "${it}_${project.base.archivesName}" }
-    }
 }
 
 tasks.register("idePostSync") {

@@ -1,4 +1,4 @@
-package com.hareidus.cobble.foundation.database
+package com.hareidus.taboo.farm.foundation.database
 
 import taboolib.module.database.*
 import javax.sql.DataSource

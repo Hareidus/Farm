@@ -1,4 +1,4 @@
-package com.hareidus.cobble.foundation.config
+package com.hareidus.taboo.farm.foundation.config
 
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
@@ -36,12 +36,12 @@ object MainConfig {
         get() = config.getString("database.mysql.password", "") ?: ""
 
     val mysqlDatabase: String
-        get() = config.getString("database.mysql.database", "my_plugin") ?: "my_plugin"
+        get() = config.getString("database.mysql.database", "farm") ?: "farm"
 
     // ==================== 通用配置 ====================
 
     val pluginPrefix: String
-        get() = config.getString("general.prefix", "&b[MyPlugin] &f") ?: "&b[MyPlugin] &f"
+        get() = config.getString("general.prefix", "&b[Farm] &f") ?: "&b[Farm] &f"
 
     // ==================== 方法 ====================
 

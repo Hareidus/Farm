@@ -1,7 +1,7 @@
-package com.hareidus.cobble.foundation.database
+package com.hareidus.taboo.farm.foundation.database
 
-import com.hareidus.cobble.foundation.database.impl.MySQLDatabase
-import com.hareidus.cobble.foundation.database.impl.SQLiteDatabase
+import com.hareidus.taboo.farm.foundation.database.impl.MySQLDatabase
+import com.hareidus.taboo.farm.foundation.database.impl.SQLiteDatabase
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
 import taboolib.common.platform.function.info

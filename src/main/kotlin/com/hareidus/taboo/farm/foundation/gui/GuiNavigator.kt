@@ -1,4 +1,4 @@
-package com.hareidus.cobble.foundation.gui
+package com.hareidus.taboo.farm.foundation.gui
 
 import org.bukkit.entity.Player
 import java.util.UUID
