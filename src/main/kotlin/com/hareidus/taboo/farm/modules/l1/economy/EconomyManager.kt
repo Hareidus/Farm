@@ -1,21 +1,22 @@
 package com.hareidus.taboo.farm.modules.l1.economy
 
 import com.hareidus.taboo.farm.foundation.model.CropPrice
-import net.milkbowl.vault.economy.Economy
-import org.bukkit.Bukkit
-import org.bukkit.entity.Player
+import org.bukkit.OfflinePlayer
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
 import taboolib.common.platform.function.info
 import taboolib.common.platform.function.warning
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
+import taboolib.platform.compat.depositBalance
+import taboolib.platform.compat.getBalance
+import taboolib.platform.compat.withdrawBalance
 
 /**
  * 经济管理器 (L1)
  *
  * 职责：
- * 1. 对接 Vault 经济系统，提供存取款 API
+ * 1. 对接 Vault 经济系统，提供存取款 API（通过 TabooLib BukkitHook）
  * 2. 管理作物收购价格配置
  *
  * 无模块依赖。
@@ -26,63 +27,60 @@ object EconomyManager {
     lateinit var config: Configuration
         private set
 
-    /** Vault 经济接口实例，为 null 表示未对接成功 */
-    private var economy: Economy? = null
-
     /** 作物收购价格缓存 */
     private var cropPrices: Map<String, CropPrice> = emptyMap()
 
     /** Vault 是否可用 */
-    val isVaultAvailable: Boolean
-        get() = economy != null
+    var isVaultAvailable: Boolean = false
+        private set
 
     @Awake(LifeCycle.ENABLE)
     fun init() {
-        hookVault()
+        checkVault()
         loadCropPrices()
     }
 
-    // ==================== Vault 对接 ====================
+    // ==================== Vault 检测 ====================
 
-    private fun hookVault() {
+    private fun checkVault() {
         try {
-            val rsp = Bukkit.getServicesManager()
-                .getRegistration(Economy::class.java)
-            if (rsp != null) {
-                economy = rsp.provider
+            val plugin = org.bukkit.Bukkit.getPluginManager().getPlugin("Vault")
+            isVaultAvailable = plugin != null
+            if (isVaultAvailable) {
                 info("已成功对接 Vault 经济系统")
             } else {
                 warning("未检测到 Vault 经济插件，经济功能已禁用")
             }
         } catch (e: Exception) {
-            warning("Vault 对接失败: ${e.message}")
+            warning("Vault 检测失败: ${e.message}")
+            isVaultAvailable = false
         }
     }
 
     // ==================== 余额操作 ====================
 
     /** 查询玩家余额 */
-    fun getBalance(player: Player): Double {
-        return economy?.getBalance(player) ?: 0.0
+    fun getBalance(player: OfflinePlayer): Double {
+        if (!isVaultAvailable) return 0.0
+        return player.getBalance()
     }
 
     /** 检查玩家是否有足够金币 */
-    fun hasEnough(player: Player, amount: Double): Boolean {
-        return economy?.has(player, amount) ?: false
+    fun hasEnough(player: OfflinePlayer, amount: Double): Boolean {
+        if (!isVaultAvailable) return false
+        return player.getBalance() >= amount
     }
 
     /** 向玩家账户存入金币，返回是否成功 */
-    fun deposit(player: Player, amount: Double): Boolean {
-        val eco = economy ?: return false
-        val result = eco.depositPlayer(player, amount)
-        return result.transactionSuccess()
+    fun deposit(player: OfflinePlayer, amount: Double): Boolean {
+        if (!isVaultAvailable) return false
+        return player.depositBalance(amount).transactionSuccess()
     }
 
     /** 从玩家账户扣除金币，返回是否成功 */
-    fun withdraw(player: Player, amount: Double): Boolean {
-        val eco = economy ?: return false
-        val result = eco.withdrawPlayer(player, amount)
-        return result.transactionSuccess()
+    fun withdraw(player: OfflinePlayer, amount: Double): Boolean {
+        if (!isVaultAvailable) return false
+        return player.withdrawBalance(amount).transactionSuccess()
     }
 
     // ==================== 作物价格 ====================
