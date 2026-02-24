@@ -72,6 +72,7 @@ object TrapManager {
                 triggerChance = sub.getDouble("trigger-chance", 0.0),
                 deployCostMoney = sub.getDouble("deploy-cost-money", 0.0),
                 deployCostMaterials = materials,
+                conditions = sub.getStringList("conditions"),
                 penaltyValue = sub.getDouble("penalty-value", 0.0)
             )
         }.toMap()

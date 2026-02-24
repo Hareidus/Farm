@@ -191,8 +191,19 @@ object HarvestManager {
         } else if (isMature) {
             handleHarvest(e, player, crop)
         } else {
-            // 未成熟且非骨粉，不处理
-            player.sendLang("harvest-crop-not-mature")
+            // 未成熟且非骨粉，提示剩余时间
+            val def = CropManager.getCropDefinition(crop.cropTypeId)
+            if (def != null) {
+                val elapsed = System.currentTimeMillis() - crop.plantedAt
+                val remaining = def.totalGrowthTime - elapsed
+                if (remaining > 0) {
+                    player.sendLang("harvest-crop-growing", def.name, formatTime(remaining))
+                } else {
+                    player.sendLang("harvest-crop-not-mature")
+                }
+            } else {
+                player.sendLang("harvest-crop-not-mature")
+            }
             e.isCancelled = true
         }
     }
@@ -342,6 +353,19 @@ object HarvestManager {
     /** 判断方块是否为耕地 */
     private fun isFarmland(block: org.bukkit.block.Block): Boolean {
         return block.type == Material.FARMLAND
+    }
+
+    /** 将毫秒格式化为可读时间（如 "2小时30分钟"） */
+    private fun formatTime(millis: Long): String {
+        val totalSeconds = millis / 1000
+        val hours = totalSeconds / 3600
+        val minutes = (totalSeconds % 3600) / 60
+        val seconds = totalSeconds % 60
+        return buildString {
+            if (hours > 0) append("${hours}小时")
+            if (minutes > 0) append("${minutes}分钟")
+            if (hours == 0L && minutes == 0L) append("${seconds}秒")
+        }
     }
 
     // ==================== 重载 ====================

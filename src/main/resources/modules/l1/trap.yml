@@ -7,6 +7,9 @@ traps:
     deploy-cost-money: 200
     deploy-cost-materials:
       COBWEB: 4
+    conditions:
+      - "@vault:200"
+      - "@item:material:COBWEB-4"
     penalty-value: 10.0
   money_trap:
     name: "罚金陷阱"
@@ -15,6 +18,9 @@ traps:
     deploy-cost-money: 500
     deploy-cost-materials:
       GOLD_INGOT: 2
+    conditions:
+      - "@vault:500"
+      - "@item:material:GOLD_INGOT-2"
     penalty-value: 100.0
   teleport_trap:
     name: "传送陷阱"
@@ -23,4 +29,7 @@ traps:
     deploy-cost-money: 1000
     deploy-cost-materials:
       ENDER_PEARL: 4
+    conditions:
+      - "@vault:1000"
+      - "@item:material:ENDER_PEARL-4"
     penalty-value: 0.0

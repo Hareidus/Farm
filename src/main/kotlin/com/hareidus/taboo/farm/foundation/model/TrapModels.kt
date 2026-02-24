@@ -8,6 +8,7 @@ data class TrapDefinition(
     val triggerChance: Double,
     val deployCostMoney: Double,
     val deployCostMaterials: Map<String, Int>,
+    val conditions: List<String>,
     val penaltyValue: Double
 )
 
