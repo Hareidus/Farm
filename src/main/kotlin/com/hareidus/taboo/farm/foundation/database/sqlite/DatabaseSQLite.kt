@@ -56,6 +56,10 @@ class DatabaseSQLite : IDatabase {
         stealRecordsTable = createStealRecordsTable()
         stealCooldownsTable = createStealCooldownsTable()
         deployedTrapsTable = createDeployedTrapsTable()
+        cropsTable = createCropsTable()
+        playerAchievementsTable = createPlayerAchievementsTable()
+        farmStorageTable = createFarmStorageTable()
+        waterCooldownsTable = createWaterCooldownsTable()
 
         createAllTables()
     }

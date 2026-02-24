@@ -654,4 +654,53 @@ class DatabaseMySQL : IDatabase {
     }
 
     // __CROP_CONTINUE__
+
+    override fun getCropByPosition(worldName: String, x: Int, y: Int, z: Int): CropInstance? {
+        return cropsTable.select(dataSource) {
+            where("world_name" eq worldName)
+            where("x" eq x)
+            where("y" eq y)
+            where("z" eq z)
+            limit(1)
+        }.firstOrNull {
+            CropInstance(
+                id = getLong("id"),
+                cropTypeId = getString("crop_type_id"),
+                plotId = getLong("plot_id"),
+                ownerUUID = UUID.fromString(getString("owner_uuid")),
+                worldName = getString("world_name"),
+                x = getInt("x"),
+                y = getInt("y"),
+                z = getInt("z"),
+                plantedAt = getLong("planted_at")
+            )
+        }
+    }
+
+    override fun getCropById(id: Long): CropInstance? {
+        return cropsTable.select(dataSource) {
+            where("id" eq id)
+            limit(1)
+        }.firstOrNull {
+            CropInstance(
+                id = getLong("id"),
+                cropTypeId = getString("crop_type_id"),
+                plotId = getLong("plot_id"),
+                ownerUUID = UUID.fromString(getString("owner_uuid")),
+                worldName = getString("world_name"),
+                x = getInt("x"),
+                y = getInt("y"),
+                z = getInt("z"),
+                plantedAt = getLong("planted_at")
+            )
+        }
+    }
+
+    override fun removeCrop(id: Long): Boolean {
+        return cropsTable.delete(dataSource) {
+            where("id" eq id)
+        } > 0
+    }
+
+    // __CROP_CONTINUE_2__
 }
