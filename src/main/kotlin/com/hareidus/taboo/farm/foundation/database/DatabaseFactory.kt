@@ -1,7 +1,7 @@
 package com.hareidus.taboo.farm.foundation.database
 
-import com.hareidus.taboo.farm.foundation.database.impl.MySQLDatabase
-import com.hareidus.taboo.farm.foundation.database.impl.SQLiteDatabase
+import com.hareidus.taboo.farm.foundation.database.mysql.DatabaseMySQL
+import com.hareidus.taboo.farm.foundation.database.sqlite.DatabaseSQLite
 import com.hareidus.taboo.farm.foundation.config.MainConfig
 import taboolib.common.platform.function.info
 
@@ -13,11 +13,11 @@ object DatabaseFactory {
 
     fun createDatabase(): IDatabase {
         val type = DatabaseType.fromString(MainConfig.databaseType)
-        info("正在初始化数据库，类型: $type")
+        info("[Farm] 正在初始化数据库，类型: $type")
 
         return when (type) {
-            DatabaseType.MYSQL -> MySQLDatabase()
-            DatabaseType.SQLITE -> SQLiteDatabase()
+            DatabaseType.MYSQL -> DatabaseMySQL()
+            DatabaseType.SQLITE -> DatabaseSQLite()
         }
     }
 }

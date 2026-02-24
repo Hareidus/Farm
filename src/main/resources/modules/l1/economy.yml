@@ -1,0 +1,9 @@
+# ==================== 作物收购价格 ====================
+# 格式: 作物ID: 收购单价(金币)
+crop-prices:
+  wheat: 10.0
+  carrot: 8.0
+  potato: 8.0
+  beetroot: 12.0
+  melon_slice: 5.0
+  pumpkin: 15.0

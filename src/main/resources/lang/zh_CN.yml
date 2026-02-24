@@ -1,0 +1,6 @@
+# ==================== 经济模块 ====================
+economy-vault-not-found: "&c[Farm] 未检测到 Vault 经济插件，经济功能已禁用"
+economy-vault-hooked: "&a[Farm] 已成功对接 Vault 经济系统"
+economy-insufficient-funds: "&c金币不足！需要 {0} 金币，当前余额 {1}"
+economy-deposit-success: "&a成功获得 {0} 金币"
+economy-withdraw-success: "&a成功扣除 {0} 金币"

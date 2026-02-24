@@ -46,6 +46,7 @@ repositories {
         url = uri("https://nexus.maplex.top/repository/maven-public/")
         isAllowInsecureProtocol = true
     }
+    maven("https://jitpack.io")
 }
 
 dependencies {
@@ -53,6 +54,9 @@ dependencies {
     // TabooLib / NMS
     compileOnly("ink.ptms.core:v12101:12101:mapped")
     compileOnly("ink.ptms.core:v12101:12101:universal")
+
+    // Vault API
+    compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
 
     compileOnly(kotlin("stdlib"))
     compileOnly(fileTree("libs"))

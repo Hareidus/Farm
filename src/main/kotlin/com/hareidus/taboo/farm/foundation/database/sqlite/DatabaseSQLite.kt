@@ -1,4 +1,4 @@
-package com.hareidus.taboo.farm.foundation.database.impl
+package com.hareidus.taboo.farm.foundation.database.sqlite
 
 import com.hareidus.taboo.farm.foundation.config.MainConfig
 import com.hareidus.taboo.farm.foundation.database.DatabaseType
@@ -11,17 +11,20 @@ import javax.sql.DataSource
 /**
  * SQLite 数据库实现
  *
- * 只负责连接管理，不含任何业务表定义和 CRUD。
- * 表定义由各模块的 TableDefinition 实现提供，
- * 通过 DatabaseManager 在启动时统一建表。
+ * 所有表定义和 CRUD 实现集中在此类。
+ * 新增数据领域时：
+ * 1. 添加 Table 字段声明
+ * 2. 在 init 中调用 createXxxTable()
+ * 3. 在 createAllTables() 中添加建表
+ * 4. 实现 IDatabase 中声明的 CRUD 方法
  */
-class SQLiteDatabase : IDatabase {
+class DatabaseSQLite : IDatabase {
 
-    /** SQLite Host（建表时需要） */
     val host: Host<SQLite>
-
     override val type = DatabaseType.SQLITE
     override val dataSource: DataSource
+
+    // ==================== 表定义（各模块逐步追加） ====================
 
     init {
         val dbFile = File(getDataFolder(), "database/${MainConfig.sqliteFile}")
@@ -30,9 +33,15 @@ class SQLiteDatabase : IDatabase {
 
         host = dbFile.getHost()
         dataSource = host.createDataSource()
+
+        createAllTables()
+    }
+
+    private fun createAllTables() {
+        // 各模块的表在此统一创建
     }
 
     override fun close() {
-        // SQLite DataSource 由 TabooLib 管理，无需手动关闭
+        // SQLite DataSource 由 TabooLib 管理
     }
 }
