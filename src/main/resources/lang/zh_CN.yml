@@ -22,6 +22,8 @@ plot-expanded: "&a地块已扩展！新尺寸: {0}x{0}"
 plot-reset: "&e地块已重置为初始状态"
 plot-not-found: "&c未找到该玩家的农场地块"
 plot-generating: "&e正在生成你的农场地块..."
+plot-protection-no-break: "&c你不能破坏他人农场的方块"
+plot-protection-no-place: "&c你不能在他人农场放置方块"
 
 # ==================== 农场等级模块 ====================
 farmlevel-loaded: "&a[Farm] 已加载 {0} 个农场等级定义"
@@ -177,6 +179,23 @@ leaderboard-gui-category-switched: "&a已切换到 %category% 排行榜"
 upgrade-gui-cannot-upgrade: "&c升级条件不满足，请检查金币和材料"
 upgrade-gui-upgrade-complete: "&a升级成功！"
 
+# ==================== 升级模块 ====================
+upgrade-already-max: "&c你的农场已达到最高等级！"
+upgrade-config-error: "&c升级配置异常，请联系管理员"
+upgrade-not-enough-money: "&c金币不足！升级需要 {0} 金币"
+upgrade-not-enough-materials: "&c升级材料不足，请检查背包"
+upgrade-withdraw-failed: "&c金币扣除失败，请稍后再试"
+upgrade-success: "&a农场升级成功！当前等级: {0}"
+upgrade-no-plot: "&c你还没有农场地块"
+upgrade-trap-slot-invalid: "&c无效的陷阱槽位，最大槽位数: {0}"
+upgrade-trap-slot-occupied: "&c槽位 {0} 已有陷阱"
+upgrade-trap-type-invalid: "&c无效的陷阱类型"
+upgrade-trap-not-enough-money: "&c金币不足！部署需要 {0} 金币"
+upgrade-trap-not-enough-materials: "&c部署材料不足，请检查背包"
+upgrade-trap-deploy-failed: "&c陷阱部署失败，请稍后再试"
+upgrade-trap-deployed: "&a成功部署陷阱 {0} 到槽位 {1}"
+upgrade-trap-no-types: "&c没有可用的陷阱类型"
+
 # ==================== 陷阱 GUI ====================
 trap-gui-slot-empty: "&7空闲"
 trap-gui-slot-empty-chance: "&7-"
@@ -193,6 +212,7 @@ social-gui-enemy-list-header: "&6===== 仇人列表 ====="
 social-gui-enemy-entry: "&7 - &c%name%"
 social-gui-enemy-list-empty: "&7暂无仇人"
 social-gui-request-accepted: "&a已接受 %name% 的好友请求"
+social-gui-request-failed: "&c接受好友请求失败，请稍后再试"
 social-gui-no-pending-requests: "&7没有待处理的好友请求"
 
 # ==================== 成就事件桥接 ====================

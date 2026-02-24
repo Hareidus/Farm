@@ -333,7 +333,7 @@ object PlotManager {
 
     // ==================== 地形生成 ====================
 
-    /** 生成地块地形：耕地地面 + 围栏边界 */
+    /** 生成地块地形：两层地基 + 耕地地面 + 围栏边界 */
     fun generatePlotTerrain(plot: Plot) {
         val world = Bukkit.getWorld(plot.worldName) ?: run {
             warning("[Farm] 生成地形失败: 世界 '${plot.worldName}' 不存在")
@@ -344,12 +344,14 @@ object PlotManager {
         for (x in plot.minX..plot.maxX) {
             for (z in plot.minZ..plot.maxZ) {
                 val isBorder = x == plot.minX || x == plot.maxX || z == plot.minZ || z == plot.maxZ
+                // 底层地基（y-1）：泥土，防止挖穿
+                world.getBlockAt(x, y - 1, z).type = Material.DIRT
                 if (isBorder) {
                     // 边界：路径方块 + 围栏
                     world.getBlockAt(x, y, z).type = pathMaterial
                     world.getBlockAt(x, y + 1, z).type = borderMaterial
                 } else {
-                    // 内部：耕地
+                    // 内部：耕地（玩家可挖开一格放水）
                     world.getBlockAt(x, y, z).type = groundMaterial
                 }
             }

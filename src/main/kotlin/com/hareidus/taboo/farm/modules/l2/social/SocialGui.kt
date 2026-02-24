@@ -61,13 +61,13 @@ class SocialGui(
                 isCancelled = true
                 thisPlayer.closeInventory()
                 if (friends.isEmpty()) {
-                    thisPlayer.sendLang("social-gui-no-friends")
+                    thisPlayer.sendLang("social-gui-friend-list-empty")
                 } else {
-                    thisPlayer.sendLang("social-gui-friends-header")
+                    thisPlayer.sendLang("social-gui-friend-list-header")
                     friends.forEach { relation ->
                         val friendUUID = if (relation.playerA == thisPlayer.uniqueId) relation.playerB else relation.playerA
                         val friendName = Bukkit.getOfflinePlayer(friendUUID).name ?: friendUUID.toString()
-                        thisPlayer.sendLang("social-gui-friends-entry", friendName)
+                        thisPlayer.sendLang("social-gui-friend-entry", friendName)
                     }
                 }
             }
@@ -85,12 +85,12 @@ class SocialGui(
                 isCancelled = true
                 thisPlayer.closeInventory()
                 if (enemies.isEmpty()) {
-                    thisPlayer.sendLang("social-gui-no-enemies")
+                    thisPlayer.sendLang("social-gui-enemy-list-empty")
                 } else {
-                    thisPlayer.sendLang("social-gui-enemies-header")
+                    thisPlayer.sendLang("social-gui-enemy-list-header")
                     enemies.forEach { record ->
                         val enemyName = Bukkit.getOfflinePlayer(record.thiefUUID).name ?: record.thiefUUID.toString()
-                        thisPlayer.sendLang("social-gui-enemies-entry", enemyName)
+                        thisPlayer.sendLang("social-gui-enemy-entry", enemyName)
                     }
                 }
             }
@@ -107,7 +107,7 @@ class SocialGui(
             getCustomChestImpl().set(k, itemStack) {
                 isCancelled = true
                 if (pendingRequests.isEmpty()) {
-                    thisPlayer.sendLang("social-gui-no-requests")
+                    thisPlayer.sendLang("social-gui-no-pending-requests")
                 } else {
                     val first = pendingRequests.first()
                     val accepted = SocialManager.acceptFriendRequest(first.id, thisPlayer.uniqueId)
