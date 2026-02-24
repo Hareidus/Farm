@@ -1,0 +1,54 @@
+Title: "&6[陷阱部署]"
+
+GuiPlain:
+  - "#########"
+  - "##I#####B"
+  - "#0#1#2###"
+  - "#########"
+
+GuiKey:
+  "#":
+    Material: "BLACK_STAINED_GLASS_PANE"
+    Name: " "
+  "I":
+    IconFunction: "info"
+    Material: "BOOK"
+    Name: "&e陷阱概览"
+    Lore:
+      - "&7已部署: &f%used%&7/&f%max%"
+      - ""
+      - "&7点击槽位部署陷阱"
+  "0":
+    IconFunction: "slot0"
+    Material: "IRON_TRAPDOOR"
+    Name: "&7槽位 #0"
+    Lore:
+      - "&7状态: %trap_name%"
+      - "&7触发率: %trap_chance%"
+      - "&7惩罚: %trap_penalty%"
+      - ""
+      - "&e点击部署/查看"
+  "1":
+    IconFunction: "slot1"
+    Material: "IRON_TRAPDOOR"
+    Name: "&7槽位 #1"
+    Lore:
+      - "&7状态: %trap_name%"
+      - "&7触发率: %trap_chance%"
+      - "&7惩罚: %trap_penalty%"
+      - ""
+      - "&e点击部署/查看"
+  "2":
+    IconFunction: "slot2"
+    Material: "IRON_TRAPDOOR"
+    Name: "&7槽位 #2"
+    Lore:
+      - "&7状态: %trap_name%"
+      - "&7触发率: %trap_chance%"
+      - "&7惩罚: %trap_penalty%"
+      - ""
+      - "&e点击部署/查看"
+  "B":
+    IconFunction: "back"
+    Material: "BARRIER"
+    Name: "&c返回"

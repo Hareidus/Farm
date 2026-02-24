@@ -1,0 +1,42 @@
+Title: "&6[农场升级]"
+
+GuiPlain:
+  - "#########"
+  - "##I#U#T##"
+  - "#########"
+  - "####B####"
+
+GuiKey:
+  "#":
+    Material: "BLACK_STAINED_GLASS_PANE"
+    Name: " "
+  "I":
+    IconFunction: "info"
+    Material: "BOOK"
+    Name: "&e农场信息"
+    Lore:
+      - "&7当前等级: &f%level%&7/&f%max_level%"
+      - "&7升级费用: &f%cost_money% &7金币"
+      - "&7材料需求: &f%cost_materials%"
+      - "&7地块扩展: &f+%plot_increase%"
+  "U":
+    IconFunction: "upgrade"
+    Material: "EXPERIENCE_BOTTLE"
+    Name: "&a点击升级"
+    Lore:
+      - "&7消耗金币和材料"
+      - "&7升级你的农场等级"
+      - ""
+      - "&e点击执行升级"
+  "T":
+    IconFunction: "traps"
+    Material: "TRIPWIRE_HOOK"
+    Name: "&c陷阱管理"
+    Lore:
+      - "&7管理你的农场陷阱"
+      - ""
+      - "&e点击打开"
+  "B":
+    IconFunction: "back"
+    Material: "BARRIER"
+    Name: "&c返回"

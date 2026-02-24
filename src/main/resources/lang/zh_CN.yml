@@ -151,3 +151,46 @@ admin-reset-failed: "&c重置玩家 {0} 的农场时发生错误"
 admin-setlevel-success: "&a已将玩家 {0} 的农场等级设置为 {1}"
 admin-setlevel-invalid: "&c无效的等级值: {0}，有效范围: 1-{1}"
 admin-reload-success: "&a所有模块配置已重载"
+
+# ==================== GUI 通用 ====================
+gui-back: "&7已返回"
+gui-config-error: "&c界面配置加载失败，请联系管理员"
+
+# ==================== 商店 GUI ====================
+shop-gui-item-name: "&f%name%"
+shop-gui-item-lore-amount: "&7背包数量: &f%amount%"
+shop-gui-item-lore-price: "&7单价: &f%price% &7金币"
+shop-gui-item-lore-total: "&7总价: &f%total% &7金币"
+shop-gui-item-lore-click: "&e点击全部出售"
+shop-gui-sell-complete: "&a出售完成，已刷新列表"
+
+# ==================== 排行榜 GUI ====================
+leaderboard-gui-entry-name: "&f#%rank% %name%"
+leaderboard-gui-entry-lore-value: "&7数值: &f%value%"
+leaderboard-gui-entry-lore-category: "&7类别: &f%category%"
+leaderboard-gui-category-switched: "&a已切换到 %category% 排行榜"
+
+# ==================== 升级 GUI ====================
+upgrade-gui-cannot-upgrade: "&c升级条件不满足，请检查金币和材料"
+upgrade-gui-upgrade-complete: "&a升级成功！"
+
+# ==================== 陷阱 GUI ====================
+trap-gui-slot-empty: "&7空闲"
+trap-gui-slot-empty-chance: "&7-"
+trap-gui-slot-empty-penalty: "&7-"
+trap-gui-no-trap-available: "&c没有可用的陷阱类型"
+trap-gui-deploy-complete: "&a陷阱部署成功！"
+trap-gui-slot-locked: "&c该槽位未解锁"
+
+# ==================== 社交 GUI ====================
+social-gui-friend-list-header: "&6===== 好友列表 ====="
+social-gui-friend-entry: "&7 - &f%name%"
+social-gui-friend-list-empty: "&7暂无好友"
+social-gui-enemy-list-header: "&6===== 仇人列表 ====="
+social-gui-enemy-entry: "&7 - &c%name%"
+social-gui-enemy-list-empty: "&7暂无仇人"
+social-gui-request-accepted: "&a已接受 %name% 的好友请求"
+social-gui-no-pending-requests: "&7没有待处理的好友请求"
+
+# ==================== 成就事件桥接 ====================
+achievement-bridge-loaded: "&a[Farm] 成就事件桥接已启动"

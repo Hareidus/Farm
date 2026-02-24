@@ -1,0 +1,40 @@
+Title: "&6[社交管理]"
+
+GuiPlain:
+  - "#########"
+  - "##F#E#R##"
+  - "#########"
+  - "####B####"
+
+GuiKey:
+  "#":
+    Material: "BLACK_STAINED_GLASS_PANE"
+    Name: " "
+  "F":
+    IconFunction: "friends"
+    Material: "TOTEM_OF_UNDYING"
+    Name: "&a好友列表"
+    Lore:
+      - "&7好友数量: &f%count%"
+      - ""
+      - "&e点击查看"
+  "E":
+    IconFunction: "enemies"
+    Material: "IRON_SWORD"
+    Name: "&c仇人列表"
+    Lore:
+      - "&7仇人数量: &f%count%"
+      - ""
+      - "&e点击查看"
+  "R":
+    IconFunction: "requests"
+    Material: "WRITABLE_BOOK"
+    Name: "&b好友请求"
+    Lore:
+      - "&7待处理: &f%count%"
+      - ""
+      - "&e点击处理"
+  "B":
+    IconFunction: "back"
+    Material: "BARRIER"
+    Name: "&c返回"
