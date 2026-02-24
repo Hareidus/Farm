@@ -58,6 +58,7 @@ object FarmLevelManager {
                 level = level,
                 upgradeCostMoney = sub.getDouble("upgrade-cost-money", 0.0),
                 upgradeCostMaterials = materials,
+                conditions = sub.getStringList("conditions"),
                 plotSizeIncrease = sub.getInt("plot-size-increase", 0),
                 trapSlots = sub.getInt("trap-slots", 0),
                 decorationSlots = sub.getInt("decoration-slots", 0),

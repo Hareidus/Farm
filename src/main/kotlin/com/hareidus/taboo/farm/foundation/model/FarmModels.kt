@@ -21,6 +21,7 @@ data class FarmLevelDefinition(
     val level: Int,
     val upgradeCostMoney: Double,
     val upgradeCostMaterials: Map<String, Int>,
+    val conditions: List<String>,
     val plotSizeIncrease: Int,
     val trapSlots: Int,
     val decorationSlots: Int,

@@ -4,6 +4,7 @@ levels:
   1:
     upgrade-cost-money: 0
     upgrade-cost-materials: {}
+    conditions: []
     plot-size-increase: 0
     trap-slots: 0
     decoration-slots: 0
@@ -14,6 +15,9 @@ levels:
     upgrade-cost-money: 500
     upgrade-cost-materials:
       OAK_LOG: 16
+    conditions:
+      - "@vault:500"
+      - "@item:material:OAK_LOG-16"
     plot-size-increase: 2
     trap-slots: 1
     decoration-slots: 1
@@ -25,6 +29,10 @@ levels:
     upgrade-cost-materials:
       OAK_LOG: 32
       IRON_INGOT: 8
+    conditions:
+      - "@vault:2000"
+      - "@item:material:OAK_LOG-32"
+      - "@item:material:IRON_INGOT-8"
     plot-size-increase: 4
     trap-slots: 2
     decoration-slots: 2
@@ -37,6 +45,11 @@ levels:
       OAK_LOG: 64
       IRON_INGOT: 16
       GOLD_INGOT: 8
+    conditions:
+      - "@vault:5000"
+      - "@item:material:OAK_LOG-64"
+      - "@item:material:IRON_INGOT-16"
+      - "@item:material:GOLD_INGOT-8"
     plot-size-increase: 6
     trap-slots: 3
     decoration-slots: 3
@@ -48,6 +61,10 @@ levels:
     upgrade-cost-materials:
       DIAMOND: 16
       GOLD_INGOT: 32
+    conditions:
+      - "@vault:15000"
+      - "@item:material:DIAMOND-16"
+      - "@item:material:GOLD_INGOT-32"
     plot-size-increase: 8
     trap-slots: 4
     decoration-slots: 4

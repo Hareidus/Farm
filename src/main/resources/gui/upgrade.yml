@@ -13,21 +13,23 @@ GuiKey:
   "I":
     IconFunction: "info"
     Material: "BOOK"
-    Name: "&e农场信息"
+    Name: "&e农场信息 &7Lv.%level%"
     Lore:
       - "&7当前等级: &f%level%&7/&f%max_level%"
-      - "&7升级费用: &f%cost_money% &7金币"
-      - "&7材料需求: &f%cost_materials%"
+      - ""
       - "&7地块扩展: &f+%plot_increase%"
+      - "&7陷阱槽位: &f%trap_slots%"
+      - "&7防护等级: &f%protection%"
+      - "&7自动收割: &f%auto_harvest%"
   "U":
     IconFunction: "upgrade"
     Material: "EXPERIENCE_BOTTLE"
-    Name: "&a点击升级"
+    Name: "&a升级到 Lv.%next_level%"
     Lore:
-      - "&7消耗金币和材料"
-      - "&7升级你的农场等级"
+      - "&7升级需要:"
+      - "{request}"
       - ""
-      - "&e点击执行升级"
+      - "&e点击升级"
   "T":
     IconFunction: "traps"
     Material: "TRIPWIRE_HOOK"

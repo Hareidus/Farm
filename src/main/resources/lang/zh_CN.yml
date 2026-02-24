@@ -217,3 +217,38 @@ social-gui-no-pending-requests: "&7没有待处理的好友请求"
 
 # ==================== 成就事件桥接 ====================
 achievement-bridge-loaded: "&a[Farm] 成就事件桥接已启动"
+
+# ==================== 条件渲染系统 (Matcher Display Renderer) ====================
+
+# --- 状态标记 ---
+request-status-satisfy: "&a✔"
+request-status-not-satisfy: "&c✘"
+# 满足时整行包裹格式（灰色+删除线+斜体，视觉弱化已完成条件）
+request-format-satisfy: "&7&m&o{status} {text}"
+# 未满足时整行包裹格式（保留原色）
+request-format-not-satisfy: "{status} {text}"
+
+# --- 每种 Matcher 类型的显示模板 ---
+request-display-vault: "&7- &f所需金币 &e×{value}"
+request-display-item: "&7- &f{name} &e×{amount}"
+request-display-permission: "&7- &f需要权限: &e{value}"
+request-display-papi: "&7- &f{lhs} {op} {rhs}"
+request-display-unknown: "&7- &f{raw}"
+
+# --- 特殊状态 ---
+request-display-none: "&7无升级条件"
+request-display-max-level: "&a已达到最高等级"
+
+# --- PAPI 运算符映射 ---
+request-operator-map:
+  - ">=->大于等于"
+  - "<=->小于等于"
+  - ">->大于"
+  - "<->小于"
+  - "==->等于"
+  - "!=->不等于"
+
+# --- PAPI 占位符映射 ---
+request-placeholder-map:
+  - "%player_level%->等级"
+  - "%vault_eco_balance%->余额"
