@@ -1,0 +1,7 @@
+# ==================== 地块模块 ====================
+plot-allocated: "&a恭喜！你的农场地块已分配"
+plot-already-owned: "&c你已经拥有一块农场地块了"
+plot-expanded: "&a地块已扩展！新尺寸: {0}x{0}"
+plot-reset: "&e地块已重置为初始状态"
+plot-not-found: "&c未找到该玩家的农场地块"
+plot-generating: "&e正在生成你的农场地块..."

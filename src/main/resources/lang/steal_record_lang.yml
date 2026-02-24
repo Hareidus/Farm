@@ -1,0 +1,2 @@
+steal-cooldown-active: "&c你对 {0} 的偷菜冷却尚未结束，剩余 {1}"
+steal-record-logged: "&7[偷菜记录] {0} 从 {1} 偷取了 {2}x{3}"

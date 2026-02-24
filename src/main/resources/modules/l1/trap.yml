@@ -1,0 +1,26 @@
+# 陷阱配置
+traps:
+  slowness_trap:
+    name: "减速陷阱"
+    penalty-type: SLOWNESS
+    trigger-chance: 0.3
+    deploy-cost-money: 200
+    deploy-cost-materials:
+      COBWEB: 4
+    penalty-value: 10.0
+  money_trap:
+    name: "罚金陷阱"
+    penalty-type: MONEY_DEDUCTION
+    trigger-chance: 0.25
+    deploy-cost-money: 500
+    deploy-cost-materials:
+      GOLD_INGOT: 2
+    penalty-value: 100.0
+  teleport_trap:
+    name: "传送陷阱"
+    penalty-type: FORCE_TELEPORT
+    trigger-chance: 0.15
+    deploy-cost-money: 1000
+    deploy-cost-materials:
+      ENDER_PEARL: 4
+    penalty-value: 0.0

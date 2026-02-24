@@ -1,0 +1,6 @@
+# 偷菜记录管理配置
+# cooldown-duration-hours: 偷菜冷却时间（小时），对同一农场主的偷菜间隔
+# max-records-per-query: 单次查询最大返回记录数
+
+cooldown-duration-hours: 4
+max-records-per-query: 50

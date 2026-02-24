@@ -1,0 +1,22 @@
+# ==================== 地块管理配置 ====================
+
+# 农场世界名称
+world-name: "farm_world"
+
+# 网格间距（地块中心之间的距离，单位：方块）
+grid-spacing: 64
+
+# 初始地块尺寸（半径，实际边长 = size * 2 + 1）
+initial-plot-size: 16
+
+# 边界材质
+border-material: OAK_FENCE
+
+# 地面材质（耕地）
+ground-material: FARMLAND
+
+# 路径材质（边界外围地面）
+path-material: GRASS_BLOCK
+
+# 地块基础 Y 坐标
+base-y: 64
