@@ -24,7 +24,12 @@ object GuiNavigator {
         val opener: () -> Unit
     )
 
+    /** 是否正在执行返回操作（防止 opener 重新入栈） */
+    private val returningPlayers = ConcurrentHashMap.newKeySet<UUID>()
+
     fun push(player: Player, guiId: String, opener: () -> Unit) {
+        // 返回操作中打开的页面不入栈
+        if (player.uniqueId in returningPlayers) return
         val stack = historyStacks.getOrPut(player.uniqueId) { Stack() }
         // 如果栈顶已经是同一类型的界面，不重复入栈（刷新场景）
         if (stack.isNotEmpty() && stack.peek().guiId == guiId) {
@@ -37,11 +42,16 @@ object GuiNavigator {
     fun back(player: Player): Boolean {
         val stack = historyStacks[player.uniqueId] ?: return false
         if (stack.isNotEmpty()) {
-            stack.pop()
+            stack.pop() // 弹出当前页面
         }
         if (stack.isNotEmpty()) {
-            val previous = stack.pop()
-            previous.opener()
+            val previous = stack.peek() // peek 不弹出，保留在栈中
+            returningPlayers.add(player.uniqueId)
+            try {
+                previous.opener()
+            } finally {
+                returningPlayers.remove(player.uniqueId)
+            }
             return true
         }
         activeGuiPlayers.remove(player.uniqueId)

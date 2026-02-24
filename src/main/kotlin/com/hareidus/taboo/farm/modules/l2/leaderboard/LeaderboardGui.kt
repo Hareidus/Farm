@@ -44,13 +44,17 @@ class LeaderboardGui(
     override fun elementGenerateItem() {
         chestImpl.onGenerate { player, element, index, slot ->
             val categoryName = LeaderboardManager.getCategoryDisplayName(category)
+            val offlinePlayer = Bukkit.getOfflinePlayer(element.playerUUID)
+            val displayName = element.playerName.ifEmpty { offlinePlayer.name ?: "???" }
             buildItem(XMaterial.PLAYER_HEAD) {
-                name = "&f#${element.rank} ${element.playerName}".colored()
+                name = "&f#${element.rank} $displayName".colored()
                 lore.addAll(listOf(
                     "&7类别: &f$categoryName".colored(),
                     "&7数值: &f${element.value}".colored()
                 ))
-                skullOwner = element.playerName
+                if (offlinePlayer.name != null) {
+                    skullOwner = offlinePlayer.name
+                }
             }
         }
     }
