@@ -33,6 +33,10 @@ class DatabaseSQLite : IDatabase {
     private val stealRecordsTable: Table<Host<SQLite>, SQLite>
     private val stealCooldownsTable: Table<Host<SQLite>, SQLite>
     private val deployedTrapsTable: Table<Host<SQLite>, SQLite>
+    private val cropsTable: Table<Host<SQLite>, SQLite>
+    private val playerAchievementsTable: Table<Host<SQLite>, SQLite>
+    private val farmStorageTable: Table<Host<SQLite>, SQLite>
+    private val waterCooldownsTable: Table<Host<SQLite>, SQLite>
 
     init {
         val dbFile = File(getDataFolder(), "database/${MainConfig.sqliteFile}")

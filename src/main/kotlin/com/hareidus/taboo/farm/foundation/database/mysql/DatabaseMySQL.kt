@@ -616,4 +616,42 @@ class DatabaseMySQL : IDatabase {
             where("plot_id" eq plotId)
         } >= 0
     }
+
+    // ==================== crop_manager ====================
+
+    override fun insertCrop(cropTypeId: String, plotId: Long, ownerUUID: UUID, worldName: String, x: Int, y: Int, z: Int, plantedAt: Long): Long {
+        cropsTable.insert(dataSource,
+            "crop_type_id", "plot_id", "owner_uuid", "world_name", "x", "y", "z", "planted_at"
+        ) {
+            value(cropTypeId, plotId, ownerUUID.toString(), worldName, x, y, z, plantedAt)
+        }
+        return cropsTable.select(dataSource) {
+            where("owner_uuid" eq ownerUUID.toString())
+            where("world_name" eq worldName)
+            where("x" eq x)
+            where("y" eq y)
+            where("z" eq z)
+            limit(1)
+        }.firstOrNull { getLong("id") } ?: -1L
+    }
+
+    override fun getCropsByPlot(plotId: Long): List<CropInstance> {
+        return cropsTable.select(dataSource) {
+            where("plot_id" eq plotId)
+        }.map {
+            CropInstance(
+                id = getLong("id"),
+                cropTypeId = getString("crop_type_id"),
+                plotId = getLong("plot_id"),
+                ownerUUID = UUID.fromString(getString("owner_uuid")),
+                worldName = getString("world_name"),
+                x = getInt("x"),
+                y = getInt("y"),
+                z = getInt("z"),
+                plantedAt = getLong("planted_at")
+            )
+        }
+    }
+
+    // __CROP_CONTINUE__
 }

@@ -1,8 +1,0 @@
-trap-loaded: "&a[Farm] 已加载 {0} 种陷阱定义"
-trap-deployed: "&a成功部署 {0} 到槽位 {1}"
-trap-removed: "&e已移除槽位 {0} 的陷阱"
-trap-no-slots: "&c没有可用的陷阱槽位"
-trap-triggered-slowness: "&c你触发了减速陷阱！移动速度降低 {0} 秒"
-trap-triggered-money: "&c你触发了罚金陷阱！被扣除 {0} 金币"
-trap-triggered-teleport: "&c你触发了传送陷阱！被强制传送回自己的农场"
-trap-owner-triggered-log: "&e[陷阱] {0} 在你的农场触发了 {1}"

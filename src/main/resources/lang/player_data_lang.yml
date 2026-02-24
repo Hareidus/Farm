@@ -1,9 +1,0 @@
-# ==================== 玩家数据模块 ====================
-playerdata-loaded: "&a你的农场数据已加载"
-playerdata-saved: "&a你的农场数据已保存"
-playerdata-notification-stolen: "&c[Farm] 你离线期间被 {0} 偷走了 {1} 个 {2}！"
-playerdata-notification-trap: "&e[Farm] 你的陷阱在离线期间被触发了！详情: {0}"
-playerdata-notification-friend: "&b[Farm] 你收到了一条好友请求: {0}"
-playerdata-notification-watered: "&a[Farm] 好友 {0} 为你的作物浇了水！"
-playerdata-notification-header: "&e===== 离线通知 ({0}条) ====="
-playerdata-notification-none: "&7没有新的离线通知"

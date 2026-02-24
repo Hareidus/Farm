@@ -4,3 +4,52 @@ economy-vault-hooked: "&a[Farm] 已成功对接 Vault 经济系统"
 economy-insufficient-funds: "&c金币不足！需要 {0} 金币，当前余额 {1}"
 economy-deposit-success: "&a成功获得 {0} 金币"
 economy-withdraw-success: "&a成功扣除 {0} 金币"
+
+# ==================== 玩家数据模块 ====================
+playerdata-loaded: "&a你的农场数据已加载"
+playerdata-saved: "&a你的农场数据已保存"
+playerdata-notification-stolen: "&c[Farm] 你离线期间被 {0} 偷走了 {1} 个 {2}！"
+playerdata-notification-trap: "&e[Farm] 你的陷阱在离线期间被触发了！详情: {0}"
+playerdata-notification-friend: "&b[Farm] 你收到了一条好友请求: {0}"
+playerdata-notification-watered: "&a[Farm] 好友 {0} 为你的作物浇了水！"
+playerdata-notification-header: "&e===== 离线通知 ({0}条) ====="
+playerdata-notification-none: "&7没有新的离线通知"
+
+# ==================== 地块模块 ====================
+plot-allocated: "&a恭喜！你的农场地块已分配"
+plot-already-owned: "&c你已经拥有一块农场地块了"
+plot-expanded: "&a地块已扩展！新尺寸: {0}x{0}"
+plot-reset: "&e地块已重置为初始状态"
+plot-not-found: "&c未找到该玩家的农场地块"
+plot-generating: "&e正在生成你的农场地块..."
+
+# ==================== 农场等级模块 ====================
+farmlevel-loaded: "&a[Farm] 已加载 {0} 个农场等级定义"
+farmlevel-player-level: "&e你的农场等级: {0}"
+farmlevel-max-level: "&c你已达到最高农场等级!"
+
+# ==================== 社交模块 ====================
+social-friend-added: "&a你和 {0} 成为了好友!"
+social-friend-removed: "&e你和 {0} 的好友关系已解除"
+social-friend-request-sent: "&a好友请求已发送给 {0}"
+social-friend-request-received: "&e{0} 想和你成为好友! 使用命令接受"
+social-friend-request-accepted: "&a你接受了 {0} 的好友请求"
+social-friend-request-rejected: "&e你拒绝了 {0} 的好友请求"
+social-friend-limit-reached: "&c好友数量已达上限 ({0})"
+social-already-friends: "&c你们已经是好友了"
+social-enemy-marked: "&c{0} 已被标记为你的仇人"
+social-not-friends: "&c你们不是好友关系"
+
+# ==================== 偷菜记录模块 ====================
+steal-cooldown-active: "&c你对 {0} 的偷菜冷却尚未结束，剩余 {1}"
+steal-record-logged: "&7[偷菜记录] {0} 从 {1} 偷取了 {2}x{3}"
+
+# ==================== 陷阱模块 ====================
+trap-loaded: "&a[Farm] 已加载 {0} 种陷阱定义"
+trap-deployed: "&a成功部署 {0} 到槽位 {1}"
+trap-removed: "&e已移除槽位 {0} 的陷阱"
+trap-no-slots: "&c没有可用的陷阱槽位"
+trap-triggered-slowness: "&c你触发了减速陷阱！移动速度降低 {0} 秒"
+trap-triggered-money: "&c你触发了罚金陷阱！被扣除 {0} 金币"
+trap-triggered-teleport: "&c你触发了传送陷阱！被强制传送回自己的农场"
+trap-owner-triggered-log: "&e[陷阱] {0} 在你的农场触发了 {1}"
