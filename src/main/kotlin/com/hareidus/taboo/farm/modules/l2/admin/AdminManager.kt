@@ -135,8 +135,33 @@ object AdminManager {
             return
         }
 
+        val oldLevel = FarmLevelManager.getPlayerLevel(targetUUID)
         FarmLevelManager.setPlayerLevel(targetUUID, level)
         FarmLevelManager.invalidateCache(targetUUID)
+
+        // 同步地块大小：计算目标等级应有的累计扩展量并应用
+        val plot = PlotManager.getPlotByOwner(targetUUID)
+        if (plot != null) {
+            val targetTotalIncrease = (2..level).sumOf { lvl ->
+                FarmLevelManager.getDefinition(lvl)?.plotSizeIncrease ?: 0
+            }
+            val initialSize = PlotManager.config.getInt("initial-plot-size", 16)
+            val expectedSize = initialSize + targetTotalIncrease
+            if (plot.size != expectedSize) {
+                val diff = expectedSize - plot.size
+                if (diff > 0) {
+                    PlotManager.expandPlot(plot.id, diff)
+                } else {
+                    // 降级场景：重置地块到目标尺寸
+                    PlotManager.resetPlot(plot.id)
+                    if (targetTotalIncrease > 0) {
+                        PlotManager.expandPlot(plot.id, targetTotalIncrease)
+                    }
+                }
+                info("[Farm] 管理员设置等级: 地块 #${plot.id} 尺寸同步为 $expectedSize")
+            }
+        }
+
         admin.sendLang("admin-setlevel-success", targetName, level)
         info("[Farm] 管理员 ${admin.name} 将玩家 $targetName 的农场等级设置为 $level")
     }
