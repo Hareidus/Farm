@@ -13,7 +13,7 @@ group = project.property("group") as String
 
 
 
-val targetJavaVersion = 21
+val targetJavaVersion = 17
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     withSourcesJar()
@@ -58,7 +58,7 @@ dependencies {
     // Vault API
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
 
-    compileOnly(kotlin("stdlib"))
+    taboo(kotlin("stdlib"))
     compileOnly(fileTree("libs"))
     taboo(fileTree("depends"))
 }
