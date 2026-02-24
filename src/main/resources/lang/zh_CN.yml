@@ -141,6 +141,9 @@ farmteleport-leave-farm: '&7[Farm] 你已离开农场世界。'
 farmteleport-player-not-found: '&c[Farm] 未找到玩家 {0}。'
 farmteleport-already-in-farm: '&e[Farm] 你已经在该农场中了。'
 
+# ==================== /farm 命令 ====================
+farm-cmd-player-not-found: '&c[Farm] 未找到玩家 {0}。'
+
 # ==================== 管理模块 ====================
 admin-no-permission: "&c你没有权限执行此操作"
 admin-player-not-found: "&c未找到玩家: {0}"
