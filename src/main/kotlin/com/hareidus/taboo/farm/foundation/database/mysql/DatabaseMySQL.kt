@@ -36,6 +36,10 @@ class DatabaseMySQL : IDatabase {
     private val stealRecordsTable: Table<Host<SQL>, SQL>
     private val stealCooldownsTable: Table<Host<SQL>, SQL>
     private val deployedTrapsTable: Table<Host<SQL>, SQL>
+    private val cropsTable: Table<Host<SQL>, SQL>
+    private val playerAchievementsTable: Table<Host<SQL>, SQL>
+    private val storageTable: Table<Host<SQL>, SQL>
+    private val waterCooldownsTable: Table<Host<SQL>, SQL>
 
     init {
         host = HostSQL(
@@ -57,6 +61,10 @@ class DatabaseMySQL : IDatabase {
         stealRecordsTable = createStealRecordsTable()
         stealCooldownsTable = createStealCooldownsTable()
         deployedTrapsTable = createDeployedTrapsTable()
+        cropsTable = createCropsTable()
+        playerAchievementsTable = createPlayerAchievementsTable()
+        storageTable = createStorageTable()
+        waterCooldownsTable = createWaterCooldownsTable()
 
         createAllTables()
     }
@@ -148,6 +156,40 @@ class DatabaseMySQL : IDatabase {
         add("slot_index") { type(ColumnTypeSQL.INT) }
     }
 
+    private fun createCropsTable() = Table("farm_crops", host) {
+        add { id() }
+        add("crop_type_id") { type(ColumnTypeSQL.VARCHAR, 64) }
+        add("plot_id") { type(ColumnTypeSQL.BIGINT) }
+        add("owner_uuid") { type(ColumnTypeSQL.VARCHAR, 36) }
+        add("world_name") { type(ColumnTypeSQL.VARCHAR, 64) }
+        add("x") { type(ColumnTypeSQL.INT) }
+        add("y") { type(ColumnTypeSQL.INT) }
+        add("z") { type(ColumnTypeSQL.INT) }
+        add("planted_at") { type(ColumnTypeSQL.BIGINT) }
+    }
+
+    private fun createPlayerAchievementsTable() = Table("farm_player_achievements", host) {
+        add { id() }
+        add("player_uuid") { type(ColumnTypeSQL.VARCHAR, 36) }
+        add("achievement_id") { type(ColumnTypeSQL.VARCHAR, 64) }
+        add("current_progress") { type(ColumnTypeSQL.BIGINT) }
+        add("completed") { type(ColumnTypeSQL.TINYINT) }
+        add("completed_at") { type(ColumnTypeSQL.BIGINT) }
+    }
+
+    private fun createStorageTable() = Table("farm_storage", host) {
+        add { id() }
+        add("player_uuid") { type(ColumnTypeSQL.VARCHAR, 36) }
+        add("item_type") { type(ColumnTypeSQL.VARCHAR, 64) }
+        add("amount") { type(ColumnTypeSQL.INT) }
+    }
+
+    private fun createWaterCooldownsTable() = Table("farm_water_cooldowns", host) {
+        add("waterer_uuid") { type(ColumnTypeSQL.VARCHAR, 36) }
+        add("target_uuid") { type(ColumnTypeSQL.VARCHAR, 36) }
+        add("cooldown_end_time") { type(ColumnTypeSQL.BIGINT) }
+    }
+
     private fun createAllTables() {
         playerDataTable.workspace(dataSource) { createTable() }.run()
         offlineNotificationsTable.workspace(dataSource) { createTable() }.run()
@@ -159,6 +201,10 @@ class DatabaseMySQL : IDatabase {
         stealRecordsTable.workspace(dataSource) { createTable() }.run()
         stealCooldownsTable.workspace(dataSource) { createTable() }.run()
         deployedTrapsTable.workspace(dataSource) { createTable() }.run()
+        cropsTable.workspace(dataSource) { createTable() }.run()
+        playerAchievementsTable.workspace(dataSource) { createTable() }.run()
+        storageTable.workspace(dataSource) { createTable() }.run()
+        waterCooldownsTable.workspace(dataSource) { createTable() }.run()
     }
 
     override fun close() {
@@ -653,8 +699,6 @@ class DatabaseMySQL : IDatabase {
         }
     }
 
-    // __CROP_CONTINUE__
-
     override fun getCropByPosition(worldName: String, x: Int, y: Int, z: Int): CropInstance? {
         return cropsTable.select(dataSource) {
             where("world_name" eq worldName)
@@ -702,5 +746,176 @@ class DatabaseMySQL : IDatabase {
         } > 0
     }
 
-    // __CROP_CONTINUE_2__
+    override fun removeAllCropsByPlot(plotId: Long): Boolean {
+        return cropsTable.delete(dataSource) {
+            where("plot_id" eq plotId)
+        } >= 0
+    }
+
+    override fun updateCropPlantedAt(id: Long, plantedAt: Long): Boolean {
+        return cropsTable.update(dataSource) {
+            where("id" eq id)
+            set("planted_at", plantedAt)
+        } > 0
+    }
+
+    // ==================== achievement_manager ====================
+
+    override fun getPlayerAchievements(uuid: UUID): List<PlayerAchievement> {
+        return playerAchievementsTable.select(dataSource) {
+            where("player_uuid" eq uuid.toString())
+        }.map {
+            PlayerAchievement(
+                id = getLong("id"),
+                playerUUID = UUID.fromString(getString("player_uuid")),
+                achievementId = getString("achievement_id"),
+                currentProgress = getLong("current_progress"),
+                completed = getInt("completed") == 1,
+                completedAt = getLong("completed_at").let { if (it == 0L) null else it }
+            )
+        }
+    }
+
+    override fun getPlayerAchievement(uuid: UUID, achievementId: String): PlayerAchievement? {
+        return playerAchievementsTable.select(dataSource) {
+            where("player_uuid" eq uuid.toString())
+            where("achievement_id" eq achievementId)
+            limit(1)
+        }.firstOrNull {
+            PlayerAchievement(
+                id = getLong("id"),
+                playerUUID = UUID.fromString(getString("player_uuid")),
+                achievementId = getString("achievement_id"),
+                currentProgress = getLong("current_progress"),
+                completed = getInt("completed") == 1,
+                completedAt = getLong("completed_at").let { if (it == 0L) null else it }
+            )
+        }
+    }
+
+    override fun insertPlayerAchievement(uuid: UUID, achievementId: String): Boolean {
+        return playerAchievementsTable.insert(dataSource,
+            "player_uuid", "achievement_id", "current_progress", "completed", "completed_at"
+        ) {
+            value(uuid.toString(), achievementId, 0L, 0, 0L)
+        } > 0
+    }
+
+    override fun updatePlayerAchievement(uuid: UUID, achievementId: String, progress: Long, completed: Boolean, completedAt: Long?): Boolean {
+        return playerAchievementsTable.update(dataSource) {
+            where("player_uuid" eq uuid.toString())
+            where("achievement_id" eq achievementId)
+            set("current_progress", progress)
+            set("completed", if (completed) 1 else 0)
+            set("completed_at", completedAt ?: 0L)
+        } > 0
+    }
+
+    // ==================== leaderboard_manager ====================
+
+    override fun getTopPlayers(statisticColumn: String, limit: Int): List<LeaderboardEntry> {
+        val allowedColumns = setOf("total_harvest", "total_steal", "total_stolen", "total_coin_income", "trap_triggered_count")
+        if (statisticColumn !in allowedColumns) return emptyList()
+        val results = mutableListOf<LeaderboardEntry>()
+        dataSource.connection.use { conn ->
+            conn.prepareStatement("SELECT uuid, $statisticColumn FROM farm_player_data ORDER BY $statisticColumn DESC LIMIT ?").use { stmt ->
+                stmt.setInt(1, limit)
+                val rs = stmt.executeQuery()
+                var rank = 1
+                while (rs.next()) {
+                    results.add(LeaderboardEntry(
+                        playerUUID = UUID.fromString(rs.getString("uuid")),
+                        playerName = "",
+                        category = statisticColumn,
+                        value = rs.getLong(statisticColumn),
+                        rank = rank++
+                    ))
+                }
+            }
+        }
+        return results
+    }
+
+    // ==================== harvest_manager (FarmStorage) ====================
+
+    override fun getFarmStorage(uuid: UUID): List<FarmStorage> {
+        return storageTable.select(dataSource) {
+            where("player_uuid" eq uuid.toString())
+        }.map {
+            FarmStorage(
+                id = getLong("id"),
+                playerUUID = UUID.fromString(getString("player_uuid")),
+                itemType = getString("item_type"),
+                amount = getInt("amount")
+            )
+        }
+    }
+
+    override fun insertOrUpdateFarmStorage(uuid: UUID, itemType: String, amount: Int): Boolean {
+        val uuidStr = uuid.toString()
+        val existing = storageTable.select(dataSource) {
+            where("player_uuid" eq uuidStr)
+            where("item_type" eq itemType)
+            limit(1)
+        }.firstOrNull { getInt("amount") }
+        return if (existing != null) {
+            storageTable.update(dataSource) {
+                where("player_uuid" eq uuidStr)
+                where("item_type" eq itemType)
+                set("amount", existing + amount)
+            } > 0
+        } else {
+            storageTable.insert(dataSource, "player_uuid", "item_type", "amount") {
+                value(uuidStr, itemType, amount)
+            } > 0
+        }
+    }
+
+    override fun clearFarmStorage(uuid: UUID): Boolean {
+        return storageTable.delete(dataSource) {
+            where("player_uuid" eq uuid.toString())
+        } >= 0
+    }
+
+    // ==================== friend_interaction_manager (WaterCooldown) ====================
+
+    override fun getWaterCooldown(watererUUID: UUID, targetUUID: UUID): WaterCooldown? {
+        return waterCooldownsTable.select(dataSource) {
+            where("waterer_uuid" eq watererUUID.toString())
+            where("target_uuid" eq targetUUID.toString())
+            limit(1)
+        }.firstOrNull {
+            WaterCooldown(
+                watererUUID = UUID.fromString(getString("waterer_uuid")),
+                targetUUID = UUID.fromString(getString("target_uuid")),
+                cooldownEndTime = getLong("cooldown_end_time")
+            )
+        }
+    }
+
+    override fun setWaterCooldown(watererUUID: UUID, targetUUID: UUID, cooldownEndTime: Long): Boolean {
+        val watererStr = watererUUID.toString()
+        val targetStr = targetUUID.toString()
+        val existing = getWaterCooldown(watererUUID, targetUUID)
+        return if (existing != null) {
+            waterCooldownsTable.update(dataSource) {
+                where("waterer_uuid" eq watererStr)
+                where("target_uuid" eq targetStr)
+                set("cooldown_end_time", cooldownEndTime)
+            } > 0
+        } else {
+            waterCooldownsTable.insert(dataSource,
+                "waterer_uuid", "target_uuid", "cooldown_end_time"
+            ) {
+                value(watererStr, targetStr, cooldownEndTime)
+            } > 0
+        }
+    }
+
+    override fun removeWaterCooldown(watererUUID: UUID, targetUUID: UUID): Boolean {
+        return waterCooldownsTable.delete(dataSource) {
+            where("waterer_uuid" eq watererUUID.toString())
+            where("target_uuid" eq targetUUID.toString())
+        } > 0
+    }
 }

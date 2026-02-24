@@ -151,6 +151,40 @@ class DatabaseSQLite : IDatabase {
         add("slot_index") { type(ColumnTypeSQLite.INTEGER) }
     }
 
+    private fun createCropsTable() = Table("farm_crops", host) {
+        add { id() }
+        add("crop_type_id") { type(ColumnTypeSQLite.TEXT) }
+        add("plot_id") { type(ColumnTypeSQLite.INTEGER) }
+        add("owner_uuid") { type(ColumnTypeSQLite.TEXT) }
+        add("world_name") { type(ColumnTypeSQLite.TEXT) }
+        add("x") { type(ColumnTypeSQLite.INTEGER) }
+        add("y") { type(ColumnTypeSQLite.INTEGER) }
+        add("z") { type(ColumnTypeSQLite.INTEGER) }
+        add("planted_at") { type(ColumnTypeSQLite.INTEGER) }
+    }
+
+    private fun createPlayerAchievementsTable() = Table("farm_player_achievements", host) {
+        add { id() }
+        add("player_uuid") { type(ColumnTypeSQLite.TEXT) }
+        add("achievement_id") { type(ColumnTypeSQLite.TEXT) }
+        add("current_progress") { type(ColumnTypeSQLite.INTEGER) }
+        add("completed") { type(ColumnTypeSQLite.INTEGER) }
+        add("completed_at") { type(ColumnTypeSQLite.INTEGER) }
+    }
+
+    private fun createFarmStorageTable() = Table("farm_storage", host) {
+        add { id() }
+        add("player_uuid") { type(ColumnTypeSQLite.TEXT) }
+        add("item_type") { type(ColumnTypeSQLite.TEXT) }
+        add("amount") { type(ColumnTypeSQLite.INTEGER) }
+    }
+
+    private fun createWaterCooldownsTable() = Table("farm_water_cooldowns", host) {
+        add("waterer_uuid") { type(ColumnTypeSQLite.TEXT) }
+        add("target_uuid") { type(ColumnTypeSQLite.TEXT) }
+        add("cooldown_end_time") { type(ColumnTypeSQLite.INTEGER) }
+    }
+
     private fun createAllTables() {
         playerDataTable.workspace(dataSource) { createTable() }.run()
         offlineNotificationsTable.workspace(dataSource) { createTable() }.run()
@@ -162,6 +196,10 @@ class DatabaseSQLite : IDatabase {
         stealRecordsTable.workspace(dataSource) { createTable() }.run()
         stealCooldownsTable.workspace(dataSource) { createTable() }.run()
         deployedTrapsTable.workspace(dataSource) { createTable() }.run()
+        cropsTable.workspace(dataSource) { createTable() }.run()
+        playerAchievementsTable.workspace(dataSource) { createTable() }.run()
+        farmStorageTable.workspace(dataSource) { createTable() }.run()
+        waterCooldownsTable.workspace(dataSource) { createTable() }.run()
     }
 
     override fun close() {
@@ -612,5 +650,256 @@ class DatabaseSQLite : IDatabase {
         return deployedTrapsTable.delete(dataSource) {
             where("plot_id" eq plotId)
         } >= 0
+    }
+
+    // ==================== crop_manager ====================
+
+    override fun insertCrop(cropTypeId: String, plotId: Long, ownerUUID: UUID, worldName: String, x: Int, y: Int, z: Int, plantedAt: Long): Long {
+        cropsTable.insert(dataSource,
+            "crop_type_id", "plot_id", "owner_uuid", "world_name", "x", "y", "z", "planted_at"
+        ) {
+            value(cropTypeId, plotId, ownerUUID.toString(), worldName, x, y, z, plantedAt)
+        }
+        return cropsTable.select(dataSource) {
+            where("owner_uuid" eq ownerUUID.toString())
+            where("world_name" eq worldName)
+            where("x" eq x)
+            where("y" eq y)
+            where("z" eq z)
+            limit(1)
+        }.firstOrNull { getLong("id") } ?: -1L
+    }
+
+    override fun getCropsByPlot(plotId: Long): List<CropInstance> {
+        return cropsTable.select(dataSource) {
+            where("plot_id" eq plotId)
+        }.map {
+            CropInstance(
+                id = getLong("id"),
+                cropTypeId = getString("crop_type_id"),
+                plotId = getLong("plot_id"),
+                ownerUUID = UUID.fromString(getString("owner_uuid")),
+                worldName = getString("world_name"),
+                x = getInt("x"),
+                y = getInt("y"),
+                z = getInt("z"),
+                plantedAt = getLong("planted_at")
+            )
+        }
+    }
+
+    override fun getCropByPosition(worldName: String, x: Int, y: Int, z: Int): CropInstance? {
+        return cropsTable.select(dataSource) {
+            where("world_name" eq worldName)
+            where("x" eq x)
+            where("y" eq y)
+            where("z" eq z)
+            limit(1)
+        }.firstOrNull {
+            CropInstance(
+                id = getLong("id"),
+                cropTypeId = getString("crop_type_id"),
+                plotId = getLong("plot_id"),
+                ownerUUID = UUID.fromString(getString("owner_uuid")),
+                worldName = getString("world_name"),
+                x = getInt("x"),
+                y = getInt("y"),
+                z = getInt("z"),
+                plantedAt = getLong("planted_at")
+            )
+        }
+    }
+
+    override fun getCropById(id: Long): CropInstance? {
+        return cropsTable.select(dataSource) {
+            where("id" eq id)
+            limit(1)
+        }.firstOrNull {
+            CropInstance(
+                id = getLong("id"),
+                cropTypeId = getString("crop_type_id"),
+                plotId = getLong("plot_id"),
+                ownerUUID = UUID.fromString(getString("owner_uuid")),
+                worldName = getString("world_name"),
+                x = getInt("x"),
+                y = getInt("y"),
+                z = getInt("z"),
+                plantedAt = getLong("planted_at")
+            )
+        }
+    }
+
+    override fun removeCrop(id: Long): Boolean {
+        return cropsTable.delete(dataSource) {
+            where("id" eq id)
+        } > 0
+    }
+
+    override fun removeAllCropsByPlot(plotId: Long): Boolean {
+        return cropsTable.delete(dataSource) {
+            where("plot_id" eq plotId)
+        } >= 0
+    }
+
+    override fun updateCropPlantedAt(id: Long, plantedAt: Long): Boolean {
+        return cropsTable.update(dataSource) {
+            where("id" eq id)
+            set("planted_at", plantedAt)
+        } > 0
+    }
+
+    // ==================== achievement_manager ====================
+
+    override fun getPlayerAchievements(uuid: UUID): List<PlayerAchievement> {
+        return playerAchievementsTable.select(dataSource) {
+            where("player_uuid" eq uuid.toString())
+        }.map {
+            PlayerAchievement(
+                id = getLong("id"),
+                playerUUID = UUID.fromString(getString("player_uuid")),
+                achievementId = getString("achievement_id"),
+                currentProgress = getLong("current_progress"),
+                completed = getInt("completed") == 1,
+                completedAt = getLong("completed_at").let { if (it == 0L) null else it }
+            )
+        }
+    }
+
+    override fun getPlayerAchievement(uuid: UUID, achievementId: String): PlayerAchievement? {
+        return playerAchievementsTable.select(dataSource) {
+            where("player_uuid" eq uuid.toString())
+            where("achievement_id" eq achievementId)
+            limit(1)
+        }.firstOrNull {
+            PlayerAchievement(
+                id = getLong("id"),
+                playerUUID = UUID.fromString(getString("player_uuid")),
+                achievementId = getString("achievement_id"),
+                currentProgress = getLong("current_progress"),
+                completed = getInt("completed") == 1,
+                completedAt = getLong("completed_at").let { if (it == 0L) null else it }
+            )
+        }
+    }
+
+    override fun insertPlayerAchievement(uuid: UUID, achievementId: String): Boolean {
+        return playerAchievementsTable.insert(dataSource,
+            "player_uuid", "achievement_id", "current_progress", "completed", "completed_at"
+        ) {
+            value(uuid.toString(), achievementId, 0L, 0, 0L)
+        } > 0
+    }
+
+    override fun updatePlayerAchievement(uuid: UUID, achievementId: String, progress: Long, completed: Boolean, completedAt: Long?): Boolean {
+        return playerAchievementsTable.update(dataSource) {
+            where("player_uuid" eq uuid.toString())
+            where("achievement_id" eq achievementId)
+            set("current_progress", progress)
+            set("completed", if (completed) 1 else 0)
+            set("completed_at", completedAt ?: 0L)
+        } > 0
+    }
+
+    // ==================== leaderboard_manager ====================
+
+    override fun getTopPlayers(statisticColumn: String, limit: Int): List<LeaderboardEntry> {
+        val allowedColumns = setOf("total_harvest", "total_steal", "total_stolen", "total_coin_income", "trap_triggered_count")
+        if (statisticColumn !in allowedColumns) return emptyList()
+        var rank = 0
+        return playerDataTable.select(dataSource) {
+            order(statisticColumn, true)
+            limit(limit)
+        }.map {
+            rank++
+            LeaderboardEntry(
+                playerUUID = UUID.fromString(getString("uuid")),
+                playerName = "",
+                category = statisticColumn,
+                value = getLong(statisticColumn),
+                rank = rank
+            )
+        }
+    }
+
+    // ==================== harvest_manager (FarmStorage) ====================
+
+    override fun getFarmStorage(uuid: UUID): List<FarmStorage> {
+        return farmStorageTable.select(dataSource) {
+            where("player_uuid" eq uuid.toString())
+        }.map {
+            FarmStorage(
+                id = getLong("id"),
+                playerUUID = UUID.fromString(getString("player_uuid")),
+                itemType = getString("item_type"),
+                amount = getInt("amount")
+            )
+        }
+    }
+
+    override fun insertOrUpdateFarmStorage(uuid: UUID, itemType: String, amount: Int): Boolean {
+        val existing = farmStorageTable.select(dataSource) {
+            where("player_uuid" eq uuid.toString())
+            where("item_type" eq itemType)
+            limit(1)
+        }.firstOrNull { getInt("amount") }
+        return if (existing != null) {
+            farmStorageTable.update(dataSource) {
+                where("player_uuid" eq uuid.toString())
+                where("item_type" eq itemType)
+                set("amount", existing + amount)
+            } > 0
+        } else {
+            farmStorageTable.insert(dataSource,
+                "player_uuid", "item_type", "amount"
+            ) {
+                value(uuid.toString(), itemType, amount)
+            } > 0
+        }
+    }
+
+    override fun clearFarmStorage(uuid: UUID): Boolean {
+        return farmStorageTable.delete(dataSource) {
+            where("player_uuid" eq uuid.toString())
+        } >= 0
+    }
+
+    // ==================== friend_interaction_manager (WaterCooldown) ====================
+
+    override fun getWaterCooldown(watererUUID: UUID, targetUUID: UUID): WaterCooldown? {
+        return waterCooldownsTable.select(dataSource) {
+            where("waterer_uuid" eq watererUUID.toString())
+            where("target_uuid" eq targetUUID.toString())
+            limit(1)
+        }.firstOrNull {
+            WaterCooldown(
+                watererUUID = UUID.fromString(getString("waterer_uuid")),
+                targetUUID = UUID.fromString(getString("target_uuid")),
+                cooldownEndTime = getLong("cooldown_end_time")
+            )
+        }
+    }
+
+    override fun setWaterCooldown(watererUUID: UUID, targetUUID: UUID, cooldownEndTime: Long): Boolean {
+        val existing = getWaterCooldown(watererUUID, targetUUID)
+        return if (existing != null) {
+            waterCooldownsTable.update(dataSource) {
+                where("waterer_uuid" eq watererUUID.toString())
+                where("target_uuid" eq targetUUID.toString())
+                set("cooldown_end_time", cooldownEndTime)
+            } > 0
+        } else {
+            waterCooldownsTable.insert(dataSource,
+                "waterer_uuid", "target_uuid", "cooldown_end_time"
+            ) {
+                value(watererUUID.toString(), targetUUID.toString(), cooldownEndTime)
+            } > 0
+        }
+    }
+
+    override fun removeWaterCooldown(watererUUID: UUID, targetUUID: UUID): Boolean {
+        return waterCooldownsTable.delete(dataSource) {
+            where("waterer_uuid" eq watererUUID.toString())
+            where("target_uuid" eq targetUUID.toString())
+        } > 0
     }
 }

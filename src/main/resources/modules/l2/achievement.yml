@@ -1,0 +1,37 @@
+# ==================== 成就系统配置 ====================
+achievements:
+  first_harvest:
+    name: "初次收获"
+    description: "收获第一株作物"
+    trigger-type: "TOTAL_HARVEST"
+    threshold: 1
+    reward-money: 50.0
+    reward-items:
+      BONE_MEAL: 5
+    title-prefix: "&a[新手农夫]"
+  harvest_master:
+    name: "丰收大师"
+    description: "累计收获100株作物"
+    trigger-type: "TOTAL_HARVEST"
+    threshold: 100
+    reward-money: 500.0
+    reward-items:
+      GOLDEN_APPLE: 1
+    title-prefix: "&6[丰收大师]"
+  steal_novice:
+    name: "小偷学徒"
+    description: "成功偷取10次作物"
+    trigger-type: "TOTAL_STEAL"
+    threshold: 10
+    reward-money: 200.0
+    reward-items: {}
+    title-prefix: "&c[小偷学徒]"
+  iron_wall:
+    name: "铁壁防御"
+    description: "陷阱触发50次"
+    trigger-type: "TRAP_TRIGGERED_COUNT"
+    threshold: 50
+    reward-money: 1000.0
+    reward-items:
+      DIAMOND: 1
+    title-prefix: "&b[铁壁农场]"

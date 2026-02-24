@@ -1,0 +1,48 @@
+# 作物定义配置
+crops:
+  wheat:
+    name: "小麦"
+    custom: false
+    seed-item: "WHEAT_SEEDS"
+    harvest-item: "WHEAT"
+    harvest-min: 1
+    harvest-max: 3
+    stages:
+      - duration: 300000
+        material: "WHEAT[age=0]"
+      - duration: 300000
+        material: "WHEAT[age=2]"
+      - duration: 300000
+        material: "WHEAT[age=4]"
+      - duration: 300000
+        material: "WHEAT[age=7]"
+  carrot:
+    name: "胡萝卜"
+    custom: false
+    seed-item: "CARROT"
+    harvest-item: "CARROT"
+    harvest-min: 1
+    harvest-max: 4
+    stages:
+      - duration: 240000
+        material: "CARROTS[age=0]"
+      - duration: 240000
+        material: "CARROTS[age=3]"
+      - duration: 240000
+        material: "CARROTS[age=5]"
+      - duration: 240000
+        material: "CARROTS[age=7]"
+  golden_apple_plant:
+    name: "金苹果树"
+    custom: true
+    seed-item: "GOLDEN_APPLE"
+    harvest-item: "GOLDEN_APPLE"
+    harvest-min: 1
+    harvest-max: 2
+    stages:
+      - duration: 600000
+        material: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYWIxMjIifX19"
+      - duration: 600000
+        material: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYWIxMjMifX19"
+      - duration: 600000
+        material: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYWIxMjQifX19"

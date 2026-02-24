@@ -69,4 +69,37 @@ interface IDatabase {
     fun deployTrap(plotId: Long, trapTypeId: String, slotIndex: Int): Boolean
     fun removeTrap(plotId: Long, slotIndex: Int): Boolean
     fun removeAllTraps(plotId: Long): Boolean
+
+    // ==================== crop_manager ====================
+
+    fun insertCrop(cropTypeId: String, plotId: Long, ownerUUID: UUID, worldName: String, x: Int, y: Int, z: Int, plantedAt: Long): Long
+    fun getCropsByPlot(plotId: Long): List<CropInstance>
+    fun getCropById(id: Long): CropInstance?
+    fun getCropByPosition(worldName: String, x: Int, y: Int, z: Int): CropInstance?
+    fun removeCrop(id: Long): Boolean
+    fun removeAllCropsByPlot(plotId: Long): Boolean
+    fun updateCropPlantedAt(id: Long, plantedAt: Long): Boolean
+
+    // ==================== achievement_manager ====================
+
+    fun getPlayerAchievements(uuid: UUID): List<PlayerAchievement>
+    fun getPlayerAchievement(uuid: UUID, achievementId: String): PlayerAchievement?
+    fun insertPlayerAchievement(uuid: UUID, achievementId: String): Boolean
+    fun updatePlayerAchievement(uuid: UUID, achievementId: String, progress: Long, completed: Boolean, completedAt: Long?): Boolean
+
+    // ==================== leaderboard_manager ====================
+
+    fun getTopPlayers(statisticColumn: String, limit: Int): List<LeaderboardEntry>
+
+    // ==================== harvest_manager (FarmStorage) ====================
+
+    fun getFarmStorage(uuid: UUID): List<FarmStorage>
+    fun insertOrUpdateFarmStorage(uuid: UUID, itemType: String, amount: Int): Boolean
+    fun clearFarmStorage(uuid: UUID): Boolean
+
+    // ==================== friend_interaction_manager (WaterCooldown) ====================
+
+    fun getWaterCooldown(watererUUID: UUID, targetUUID: UUID): WaterCooldown?
+    fun setWaterCooldown(watererUUID: UUID, targetUUID: UUID, cooldownEndTime: Long): Boolean
+    fun removeWaterCooldown(watererUUID: UUID, targetUUID: UUID): Boolean
 }

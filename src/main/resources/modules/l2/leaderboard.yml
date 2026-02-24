@@ -1,0 +1,21 @@
+# 排行榜配置
+# refresh-interval-seconds: 缓存刷新周期（秒）
+# entries-per-page: GUI 每页显示条目数
+# categories: 排行榜类别定义
+
+refresh-interval-seconds: 300
+entries-per-page: 10
+
+categories:
+  harvest:
+    column: "total_harvest"
+    display-name: "种植之王"
+  steal:
+    column: "total_steal"
+    display-name: "偷菜大盗"
+  wealth:
+    column: "total_coin_income"
+    display-name: "农场富翁"
+  defense:
+    column: "trap_triggered_count"
+    display-name: "铁壁农场"
