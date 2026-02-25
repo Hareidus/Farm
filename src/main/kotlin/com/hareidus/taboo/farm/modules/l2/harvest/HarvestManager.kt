@@ -1,6 +1,8 @@
 package com.hareidus.taboo.farm.modules.l2.harvest
 
 import com.hareidus.taboo.farm.foundation.database.DatabaseManager
+import com.hareidus.taboo.farm.foundation.api.events.PreCropPlantEvent
+import com.hareidus.taboo.farm.foundation.api.events.PreCropHarvestEvent
 import com.hareidus.taboo.farm.foundation.model.CropInstance
 import com.hareidus.taboo.farm.foundation.model.CropRemoveReason
 import com.hareidus.taboo.farm.foundation.model.StatisticType
@@ -10,10 +12,13 @@ import com.hareidus.taboo.farm.modules.l2.farmteleport.PlayerEnterOwnFarmEvent
 import com.hareidus.taboo.farm.modules.l1.farmlevel.FarmLevelManager
 import com.hareidus.taboo.farm.modules.l1.playerdata.PlayerDataManager
 import com.hareidus.taboo.farm.modules.l1.plot.PlotManager
+import org.bukkit.Bukkit
+import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.Particle
 import org.bukkit.entity.Player
 import org.bukkit.event.block.Action
+import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
@@ -23,6 +28,7 @@ import taboolib.common.platform.event.EventPriority
 import taboolib.common.platform.event.SubscribeEvent
 import taboolib.common.platform.function.info
 import taboolib.common.platform.function.warning
+import com.hareidus.taboo.farm.foundation.sound.SoundManager
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
 import taboolib.platform.util.sendLang
@@ -72,6 +78,34 @@ object HarvestManager {
 
     private fun getParticleCount(): Int {
         return config.getInt("particle-count", 10)
+    }
+
+    // ==================== 事件监听: BlockBreakEvent（左键破坏收割） ====================
+
+    @SubscribeEvent(priority = EventPriority.HIGH, ignoreCancelled = true)
+    fun onBlockBreak(e: BlockBreakEvent) {
+        val block = e.block
+        if (block.world.name != PlotManager.worldName) return
+
+        val player = e.player
+        val crop = CropManager.getCropAtPosition(block.world.name, block.x, block.y, block.z) ?: return
+
+        // 必须是自己地块上的作物
+        val plot = PlotManager.getPlotByOwner(player.uniqueId)
+        if (plot == null || crop.plotId != plot.id) return
+
+        // 取消原版破坏（不掉落原版物品）
+        e.isCancelled = true
+
+        if (!CropManager.isMature(crop)) {
+            // 未成熟：直接移除，不产出
+            CropManager.removeCrop(crop.id, CropRemoveReason.HARVESTED)
+            player.sendLang("harvest-crop-removed")
+            return
+        }
+
+        // 成熟：收割（不补种）
+        handleHarvestBreak(player, crop)
     }
 
     // ==================== 事件监听: PlayerInteractEvent ====================
@@ -146,6 +180,14 @@ object HarvestManager {
             return
         }
 
+        // 触发种植前事件（可被外部插件取消）
+        val prePlantEvent = PreCropPlantEvent(player, cropTypeId, plot.id, plantX, plantY, plantZ)
+        prePlantEvent.call()
+        if (prePlantEvent.isCancelled) {
+            e.isCancelled = true
+            return
+        }
+
         // 调用 CropManager 种植
         val crop = CropManager.plantCrop(player, cropTypeId, plot.id, plantLocation)
         if (crop != null) {
@@ -157,6 +199,7 @@ object HarvestManager {
             }
             val def = CropManager.getCropDefinition(cropTypeId)
             player.sendLang("harvest-plant-success", def?.name ?: cropTypeId)
+            SoundManager.play(player, "harvest-plant")
         }
         e.isCancelled = true
     }
@@ -208,11 +251,55 @@ object HarvestManager {
         }
     }
 
-    // ==================== 收割逻辑 ====================
+    // ==================== 收割逻辑（左键破坏：仅收割） ====================
 
     /**
-     * 处理手动收割
-     * 成熟度校验 -> 产出计算 -> 物品发放 -> 移除作物 -> 累加统计
+     * 处理左键破坏收割（不补种）
+     * 产出计算 -> 物品发放 -> 移除作物 -> 累加统计
+     */
+    private fun handleHarvestBreak(player: Player, crop: CropInstance) {
+        val cropDef = CropManager.getCropDefinition(crop.cropTypeId)
+        if (cropDef == null) {
+            warning("[Farm] 收割时找不到作物定义: ${crop.cropTypeId}")
+            return
+        }
+
+        val amount = CropManager.calculateHarvestAmount(cropDef)
+
+        // 触发收割前事件（可被外部插件取消或修改产量）
+        val preHarvestEvent = PreCropHarvestEvent(player, crop, amount)
+        preHarvestEvent.call()
+        if (preHarvestEvent.isCancelled) return
+        val finalAmount = preHarvestEvent.harvestAmount
+
+        val harvestMaterial = Material.matchMaterial(cropDef.harvestItemId)
+        if (harvestMaterial == null) {
+            warning("[Farm] 无法识别收获物品材质: ${cropDef.harvestItemId}")
+            return
+        }
+
+        val harvestItem = ItemStack(harvestMaterial, finalAmount)
+        val leftover = player.inventory.addItem(harvestItem)
+        for (drop in leftover.values) {
+            player.world.dropItemNaturally(player.location, drop)
+        }
+
+        CropManager.removeCrop(crop.id, CropRemoveReason.HARVESTED)
+        CropHarvestedEvent(player, crop, listOf(harvestItem), false).call()
+        PlayerDataManager.updateStatistic(player.uniqueId, StatisticType.TOTAL_HARVEST, finalAmount.toLong())
+
+        val loc = player.world.getBlockAt(crop.x, crop.y, crop.z).location.add(0.5, 0.5, 0.5)
+        player.world.spawnParticle(getHarvestParticle(), loc, getParticleCount(), 0.3, 0.3, 0.3, 0.0)
+
+        player.sendLang("harvest-success", cropDef.name, finalAmount)
+        SoundManager.play(player, "harvest-success")
+    }
+
+    // ==================== 收割逻辑（右键：收割+补种） ====================
+
+    /**
+     * 处理右键收割（收割+补种）
+     * 成熟度校验 -> 产出计算 -> 物品发放 -> 移除作物 -> 补种 -> 累加统计
      */
     private fun handleHarvest(
         e: PlayerInteractEvent,
@@ -227,13 +314,23 @@ object HarvestManager {
 
         // 计算产出
         val amount = CropManager.calculateHarvestAmount(cropDef)
+
+        // 触发收割前事件（可被外部插件取消或修改产量）
+        val preHarvestEvent = PreCropHarvestEvent(player, crop, amount)
+        preHarvestEvent.call()
+        if (preHarvestEvent.isCancelled) {
+            e.isCancelled = true
+            return
+        }
+        val finalAmount = preHarvestEvent.harvestAmount
+
         val harvestMaterial = Material.matchMaterial(cropDef.harvestItemId)
         if (harvestMaterial == null) {
             warning("[Farm] 无法识别收获物品材质: ${cropDef.harvestItemId}")
             return
         }
 
-        val harvestItem = ItemStack(harvestMaterial, amount)
+        val harvestItem = ItemStack(harvestMaterial, finalAmount)
         val harvestItems = listOf(harvestItem)
 
         // 发放物品到玩家背包
@@ -242,6 +339,12 @@ object HarvestManager {
             player.world.dropItemNaturally(player.location, drop)
         }
 
+        // 记录补种所需信息
+        val cropTypeId = crop.cropTypeId
+        val plotId = crop.plotId
+        val world = Bukkit.getWorld(crop.worldName)
+        val cropLocation = world?.let { Location(it, crop.x.toDouble(), crop.y.toDouble(), crop.z.toDouble()) }
+
         // 移除作物
         CropManager.removeCrop(crop.id, CropRemoveReason.HARVESTED)
 
@@ -249,13 +352,24 @@ object HarvestManager {
         CropHarvestedEvent(player, crop, harvestItems, false).call()
 
         // 累加统计
-        PlayerDataManager.updateStatistic(player.uniqueId, StatisticType.TOTAL_HARVEST, amount.toLong())
+        PlayerDataManager.updateStatistic(player.uniqueId, StatisticType.TOTAL_HARVEST, finalAmount.toLong())
 
         // 播放粒子
         val loc = player.world.getBlockAt(crop.x, crop.y, crop.z).location.add(0.5, 0.5, 0.5)
         player.world.spawnParticle(getHarvestParticle(), loc, getParticleCount(), 0.3, 0.3, 0.3, 0.0)
 
-        player.sendLang("harvest-success", cropDef.name, amount)
+        // 补种
+        if (cropLocation != null) {
+            val newCrop = CropManager.plantCrop(player, cropTypeId, plotId, cropLocation)
+            if (newCrop != null) {
+                player.sendLang("harvest-success-replant", cropDef.name, finalAmount)
+            } else {
+                player.sendLang("harvest-success", cropDef.name, finalAmount)
+            }
+        } else {
+            player.sendLang("harvest-success", cropDef.name, finalAmount)
+        }
+        SoundManager.play(player, "harvest-success")
         e.isCancelled = true
     }
 
@@ -297,6 +411,7 @@ object HarvestManager {
         CropBonemeledEvent(player, crop, newStage).call()
 
         player.sendLang("harvest-bonemeal-success")
+        SoundManager.play(player, "harvest-bonemeal")
         e.isCancelled = true
     }
 
@@ -345,6 +460,7 @@ object HarvestManager {
 
         if (autoHarvestCount > 0) {
             player.sendLang("harvest-auto-harvest-stored", autoHarvestCount)
+            SoundManager.play(player, "harvest-auto")
         }
     }
 

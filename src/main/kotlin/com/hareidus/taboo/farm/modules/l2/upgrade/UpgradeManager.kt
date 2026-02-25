@@ -4,6 +4,9 @@ import com.hareidus.taboo.farm.modules.l1.economy.EconomyManager
 import com.hareidus.taboo.farm.modules.l1.farmlevel.FarmLevelManager
 import com.hareidus.taboo.farm.modules.l1.plot.PlotManager
 import com.hareidus.taboo.farm.modules.l1.trap.TrapManager
+import com.hareidus.taboo.farm.foundation.api.events.PreFarmUpgradeEvent
+import com.hareidus.taboo.farm.foundation.api.events.PreTrapDeployEvent
+import com.hareidus.taboo.farm.foundation.sound.SoundManager
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -109,6 +112,11 @@ object UpgradeManager {
             return false
         }
 
+        // 触发升级前事件（可被外部插件取消）
+        val preUpgradeEvent = PreFarmUpgradeEvent(player, currentLevel, currentLevel + 1)
+        preUpgradeEvent.call()
+        if (preUpgradeEvent.isCancelled) return false
+
         // 扣除金币
         if (!EconomyManager.withdraw(player, nextDef.upgradeCostMoney)) {
             player.sendLang("upgrade-withdraw-failed")
@@ -135,6 +143,7 @@ object UpgradeManager {
 
         // 通知玩家
         player.sendLang("upgrade-success", newLevel)
+        SoundManager.play(player, "upgrade-success")
         return true
     }
 
@@ -199,6 +208,11 @@ object UpgradeManager {
             return false
         }
 
+        // 触发陷阱部署前事件（可被外部插件取消）
+        val preTrapEvent = PreTrapDeployEvent(player, trapTypeId, slotIndex, plot.id)
+        preTrapEvent.call()
+        if (preTrapEvent.isCancelled) return false
+
         // 扣除金币
         if (trapDef.deployCostMoney > 0) {
             if (!EconomyManager.withdraw(player, trapDef.deployCostMoney)) {
@@ -223,6 +237,7 @@ object UpgradeManager {
 
         // 通知玩家
         player.sendLang("upgrade-trap-deployed", trapDef.name, slotIndex)
+        SoundManager.play(player, "upgrade-trap-deployed")
         return true
     }
 

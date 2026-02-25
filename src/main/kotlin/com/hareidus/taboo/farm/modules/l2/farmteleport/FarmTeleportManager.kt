@@ -2,6 +2,7 @@ package com.hareidus.taboo.farm.modules.l2.farmteleport
 
 import com.hareidus.taboo.farm.modules.l1.crop.CropManager
 import com.hareidus.taboo.farm.modules.l1.plot.PlotManager
+import com.hareidus.taboo.farm.foundation.api.events.PreFarmTeleportEvent
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
@@ -10,6 +11,7 @@ import org.bukkit.event.block.Action
 import org.bukkit.event.player.PlayerChangedWorldEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.ItemStack
+import com.hareidus.taboo.farm.foundation.sound.SoundManager
 import taboolib.common.platform.event.SubscribeEvent
 import taboolib.common.platform.function.info
 import taboolib.common.platform.function.warning
@@ -99,6 +101,12 @@ object FarmTeleportManager {
      */
     fun teleportToOwnFarm(player: Player) {
         val uuid = player.uniqueId
+
+        // 触发传送前事件（可被外部插件取消）
+        val preTeleportEvent = PreFarmTeleportEvent(player, uuid, true)
+        preTeleportEvent.call()
+        if (preTeleportEvent.isCancelled) return
+
         var plot = PlotManager.getPlotByOwner(uuid)
         val isNewPlayer = plot == null
 
@@ -195,6 +203,11 @@ object FarmTeleportManager {
             return true
         }
 
+        // 触发传送前事件（可被外部插件取消）
+        val preTeleportEvent = PreFarmTeleportEvent(player, targetUUID, false)
+        preTeleportEvent.call()
+        if (preTeleportEvent.isCancelled) return false
+
         // 目标地块校验
         val targetPlot = PlotManager.getPlotByOwner(targetUUID)
         if (targetPlot == null) {
@@ -249,6 +262,7 @@ object FarmTeleportManager {
 
         val ownerName = Bukkit.getOfflinePlayer(ownerUUID).name ?: ownerUUID.toString()
         player.sendLang("farmteleport-enter-other", ownerName)
+        SoundManager.play(player, "farmteleport-enter-other")
 
         // 发布进入他人农场事件
         PlayerEnterOtherFarmEvent(player, ownerUUID, targetPlot.id).call()

@@ -1,6 +1,7 @@
 package com.hareidus.taboo.farm.modules.l2.friendinteraction
 
 import com.hareidus.taboo.farm.foundation.database.DatabaseManager
+import com.hareidus.taboo.farm.foundation.api.events.PreCropWaterEvent
 import com.hareidus.taboo.farm.foundation.model.NotificationType
 import com.hareidus.taboo.farm.modules.l1.crop.CropManager
 import com.hareidus.taboo.farm.modules.l1.playerdata.PlayerDataManager
@@ -11,6 +12,7 @@ import org.bukkit.Particle
 import org.bukkit.entity.Player
 import org.bukkit.event.block.Action
 import org.bukkit.event.player.PlayerInteractEvent
+import com.hareidus.taboo.farm.foundation.sound.SoundManager
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
 import taboolib.common.platform.event.SubscribeEvent
@@ -165,6 +167,11 @@ object FriendInteractionManager {
             return false
         }
 
+        // 触发浇水前事件（可被外部插件取消）
+        val preWaterEvent = PreCropWaterEvent(player, cropId, ownerUUID)
+        preWaterEvent.call()
+        if (preWaterEvent.isCancelled) return false
+
         // 执行加速生长
         val accelerated = CropManager.accelerateGrowth(cropId, waterAccelerationMs)
         if (!accelerated) {
@@ -183,6 +190,7 @@ object FriendInteractionManager {
         val ownerName = Bukkit.getOfflinePlayer(ownerUUID).name ?: ownerUUID.toString()
         val accelerationSeconds = waterAccelerationMs / 1000
         player.sendLang("friendinteraction-water-success", ownerName, accelerationSeconds)
+        SoundManager.play(player, "friendinteraction-water")
 
         // 通知农场主
         notifyOwner(player, ownerUUID)

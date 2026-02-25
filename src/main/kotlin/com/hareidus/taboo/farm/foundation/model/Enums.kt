@@ -5,7 +5,8 @@ enum class NotificationType {
     STOLEN,
     TRAP_TRIGGERED,
     FRIEND_REQUEST,
-    WATERED
+    WATERED,
+    GUARD_PET_DETECTED
 }
 
 /** 陷阱惩罚效果类型 */
@@ -21,7 +22,16 @@ enum class StatisticType {
     TOTAL_STEAL,
     TOTAL_STOLEN,
     TOTAL_COIN_INCOME,
-    TRAP_TRIGGERED_COUNT
+    TRAP_TRIGGERED_COUNT,
+    GUARD_PET_CAUGHT_COUNT
+}
+
+/** 看门宠物惩罚效果类型 */
+enum class GuardPetActionType {
+    SLOWNESS,
+    MONEY_DEDUCTION,
+    FORCE_TELEPORT,
+    BLINDNESS
 }
 
 /** 好友请求状态 */
@@ -45,4 +55,11 @@ enum class GrowthAccelerateReason {
     NATURAL,
     BONEMEAL,
     WATERING
+}
+
+/** 地块类型 */
+enum class PlotType {
+    FARMLAND,   // 农田（现有）
+    RANCH,      // 牧场（预留）
+    ORCHARD     // 果园（预留）
 }

@@ -2,6 +2,7 @@ package com.hareidus.taboo.farm.modules.l1.plot
 
 import com.hareidus.taboo.farm.foundation.database.DatabaseManager
 import com.hareidus.taboo.farm.foundation.model.Plot
+import com.hareidus.taboo.farm.foundation.model.PlotType
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.World
@@ -34,8 +35,8 @@ object PlotManager {
     lateinit var config: Configuration
         private set
 
-    /** ownerUUID -> Plot 缓存 */
-    private val plotsByOwner = ConcurrentHashMap<UUID, Plot>()
+    /** ownerUUID -> Plot 列表缓存（支持多地块） */
+    private val plotsByOwner = ConcurrentHashMap<UUID, MutableList<Plot>>()
 
     /** plotId -> Plot 缓存 */
     private val plotsById = ConcurrentHashMap<Long, Plot>()
@@ -88,7 +89,7 @@ object PlotManager {
         occupiedGrids.clear()
         val plots = DatabaseManager.database.getAllPlots()
         for (plot in plots) {
-            plotsByOwner[plot.ownerUUID] = plot
+            plotsByOwner.getOrPut(plot.ownerUUID) { mutableListOf() }.add(plot)
             plotsById[plot.id] = plot
             occupiedGrids.add(plot.gridX to plot.gridZ)
         }
@@ -98,9 +99,33 @@ object PlotManager {
 
     // ==================== 查询 API ====================
 
-    /** 根据玩家 UUID 获取其地块 */
+    /** 根据玩家 UUID 获取其主地块（FARMLAND 类型的第一块，向后兼容） */
     fun getPlotByOwner(uuid: UUID): Plot? {
-        return plotsByOwner[uuid]
+        val plots = plotsByOwner[uuid] ?: return null
+        return plots.firstOrNull { it.plotType == PlotType.FARMLAND } ?: plots.firstOrNull()
+    }
+
+    /** 获取玩家的所有地块 */
+    fun getPlotsByOwner(uuid: UUID): List<Plot> {
+        return plotsByOwner[uuid]?.toList() ?: emptyList()
+    }
+
+    /** 获取玩家指定类型的所有地块 */
+    fun getPlotsByOwnerAndType(uuid: UUID, type: PlotType): List<Plot> {
+        return plotsByOwner[uuid]?.filter { it.plotType == type } ?: emptyList()
+    }
+
+    /** 根据等级计算玩家最大地块数 */
+    fun getMaxPlots(uuid: UUID): Int {
+        if (!isMultiPlotEnabled()) return 1
+        val level = com.hareidus.taboo.farm.modules.l1.farmlevel.FarmLevelManager.getPlayerLevel(uuid)
+        val section = config.getConfigurationSection("max-plots-per-level") ?: return 1
+        return section.getInt(level.toString(), 1)
+    }
+
+    /** 是否启用多地块经营 */
+    private fun isMultiPlotEnabled(): Boolean {
+        return config.getBoolean("multi-plot-enabled", false)
     }
 
     /** 根据地块 ID 获取地块 */
@@ -111,7 +136,7 @@ object PlotManager {
     /** 根据世界坐标查找所在地块 */
     fun getPlotByPosition(worldName: String, x: Int, z: Int): Plot? {
         if (worldName != this.worldName) return null
-        return plotsByOwner.values.firstOrNull { plot ->
+        return plotsById.values.firstOrNull { plot ->
             x in plot.minX..plot.maxX && z in plot.minZ..plot.maxZ
         }
     }
@@ -139,7 +164,7 @@ object PlotManager {
 
     /** 获取所有已分配地块 */
     fun getAllPlots(): List<Plot> {
-        return plotsByOwner.values.toList()
+        return plotsById.values.toList()
     }
 
     // ==================== 分配 ====================
@@ -148,8 +173,14 @@ object PlotManager {
      * 为玩家分配新地块
      * 使用顺序网格算法：按螺旋序列计算下一个可用网格坐标
      */
-    fun allocatePlot(uuid: UUID): Plot {
-        check(getPlotByOwner(uuid) == null) { "玩家已拥有地块" }
+    fun allocatePlot(uuid: UUID, type: PlotType = PlotType.FARMLAND): Plot {
+        if (!isMultiPlotEnabled()) {
+            check(getPlotByOwner(uuid) == null) { "玩家已拥有地块" }
+        } else {
+            val current = getPlotsByOwner(uuid).size
+            val max = getMaxPlots(uuid)
+            check(current < max) { "玩家已达最大地块数 ($max)" }
+        }
 
         val (gridX, gridZ) = calculateNextGridPosition()
         val size = initialPlotSize
@@ -170,14 +201,15 @@ object PlotManager {
             minZ = minZ,
             maxX = maxX,
             maxZ = maxZ,
-            size = size
+            size = size,
+            plotType = type
         )
 
         val insertedId = DatabaseManager.database.insertPlot(plot)
         val savedPlot = plot.copy(id = insertedId)
 
         // 更新缓存
-        plotsByOwner[uuid] = savedPlot
+        plotsByOwner.getOrPut(uuid) { mutableListOf() }.add(savedPlot)
         plotsById[insertedId] = savedPlot
         occupiedGrids.add(gridX to gridZ)
         nextAllocationIndex++
@@ -368,7 +400,10 @@ object PlotManager {
             clearPlotBlocks(world, plot)
         }
         DatabaseManager.database.deletePlot(plotId)
-        plotsByOwner.remove(plot.ownerUUID)
+        plotsByOwner[plot.ownerUUID]?.removeIf { it.id == plotId }
+        if (plotsByOwner[plot.ownerUUID]?.isEmpty() == true) {
+            plotsByOwner.remove(plot.ownerUUID)
+        }
         plotsById.remove(plotId)
         occupiedGrids.remove(plot.gridX to plot.gridZ)
         info("[Farm] 地块 #$plotId 已删除")
@@ -382,6 +417,18 @@ object PlotManager {
         val centerX = plot.gridX * gridSpacing
         val centerZ = plot.gridZ * gridSpacing
         return Triple(centerX, baseY + 1, centerZ)
+    }
+
+    // ==================== 合并/拆分（预留） ====================
+
+    /** 合并多个地块为一个（预留，未实现） */
+    fun mergePlots(plotIds: List<Long>): Plot? {
+        throw UnsupportedOperationException("Plot merging is not yet implemented")
+    }
+
+    /** 将一个地块拆分为多个（预留，未实现） */
+    fun splitPlot(plotId: Long, count: Int): List<Plot>? {
+        throw UnsupportedOperationException("Plot splitting is not yet implemented")
     }
 
     /** 重载配置 */

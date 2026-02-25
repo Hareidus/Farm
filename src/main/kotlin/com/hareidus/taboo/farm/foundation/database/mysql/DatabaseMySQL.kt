@@ -4,6 +4,7 @@ import com.hareidus.taboo.farm.foundation.config.MainConfig
 import com.hareidus.taboo.farm.foundation.database.DatabaseType
 import com.hareidus.taboo.farm.foundation.database.IDatabase
 import com.hareidus.taboo.farm.foundation.model.*
+import taboolib.common.platform.function.warning
 import taboolib.module.database.*
 import java.util.UUID
 import javax.sql.DataSource
@@ -40,6 +41,7 @@ class DatabaseMySQL : IDatabase {
     private val playerAchievementsTable: Table<Host<SQL>, SQL>
     private val storageTable: Table<Host<SQL>, SQL>
     private val waterCooldownsTable: Table<Host<SQL>, SQL>
+    private val guardPetsTable: Table<Host<SQL>, SQL>
 
     init {
         host = HostSQL(
@@ -65,6 +67,7 @@ class DatabaseMySQL : IDatabase {
         playerAchievementsTable = createPlayerAchievementsTable()
         storageTable = createStorageTable()
         waterCooldownsTable = createWaterCooldownsTable()
+        guardPetsTable = createGuardPetsTable()
 
         createAllTables()
     }
@@ -79,6 +82,7 @@ class DatabaseMySQL : IDatabase {
         add("total_stolen") { type(ColumnTypeSQL.BIGINT) }
         add("total_coin_income") { type(ColumnTypeSQL.BIGINT) }
         add("trap_triggered_count") { type(ColumnTypeSQL.INT) }
+        add("guard_pet_caught_count") { type(ColumnTypeSQL.INT) }
         add("consecutive_login_days") { type(ColumnTypeSQL.INT) }
         add("last_login_date") { type(ColumnTypeSQL.BIGINT) }
     }
@@ -103,6 +107,8 @@ class DatabaseMySQL : IDatabase {
         add("max_x") { type(ColumnTypeSQL.INT) }
         add("max_z") { type(ColumnTypeSQL.INT) }
         add("size") { type(ColumnTypeSQL.INT) }
+        add("plot_type") { type(ColumnTypeSQL.VARCHAR, 20) { def("FARMLAND") } }
+        add("plot_level") { type(ColumnTypeSQL.INT) { def(1) } }
     }
 
     private fun createPlayerLevelsTable() = Table("farm_player_levels", host) {
@@ -190,6 +196,14 @@ class DatabaseMySQL : IDatabase {
         add("cooldown_end_time") { type(ColumnTypeSQL.BIGINT) }
     }
 
+    private fun createGuardPetsTable() = Table("farm_guard_pets", host) {
+        add { id() }
+        add("plot_id") { type(ColumnTypeSQL.BIGINT) }
+        add("owner_uuid") { type(ColumnTypeSQL.VARCHAR, 36) }
+        add("pet_type_id") { type(ColumnTypeSQL.VARCHAR, 64) }
+        add("level") { type(ColumnTypeSQL.INT) }
+    }
+
     private fun createAllTables() {
         playerDataTable.workspace(dataSource) { createTable() }.run()
         offlineNotificationsTable.workspace(dataSource) { createTable() }.run()
@@ -205,6 +219,7 @@ class DatabaseMySQL : IDatabase {
         playerAchievementsTable.workspace(dataSource) { createTable() }.run()
         storageTable.workspace(dataSource) { createTable() }.run()
         waterCooldownsTable.workspace(dataSource) { createTable() }.run()
+        guardPetsTable.workspace(dataSource) { createTable() }.run()
     }
 
     override fun close() {
@@ -225,6 +240,7 @@ class DatabaseMySQL : IDatabase {
                 totalStolen = getLong("total_stolen"),
                 totalCoinIncome = getLong("total_coin_income") / 100.0,
                 trapTriggeredCount = getInt("trap_triggered_count"),
+                guardPetCaughtCount = getInt("guard_pet_caught_count"),
                 consecutiveLoginDays = getInt("consecutive_login_days"),
                 lastLoginDate = getLong("last_login_date")
             )
@@ -234,10 +250,10 @@ class DatabaseMySQL : IDatabase {
     override fun insertPlayerData(uuid: UUID): Boolean {
         return playerDataTable.insert(dataSource,
             "uuid", "total_harvest", "total_steal", "total_stolen",
-            "total_coin_income", "trap_triggered_count",
+            "total_coin_income", "trap_triggered_count", "guard_pet_caught_count",
             "consecutive_login_days", "last_login_date"
         ) {
-            value(uuid.toString(), 0L, 0L, 0L, 0L, 0, 0, 0L)
+            value(uuid.toString(), 0L, 0L, 0L, 0L, 0, 0, 0, 0L)
         } > 0
     }
 
@@ -249,6 +265,7 @@ class DatabaseMySQL : IDatabase {
             set("total_stolen", data.totalStolen)
             set("total_coin_income", (data.totalCoinIncome * 100).toLong())
             set("trap_triggered_count", data.trapTriggeredCount)
+            set("guard_pet_caught_count", data.guardPetCaughtCount)
             set("consecutive_login_days", data.consecutiveLoginDays)
             set("last_login_date", data.lastLoginDate)
         } > 0
@@ -293,60 +310,57 @@ class DatabaseMySQL : IDatabase {
         } >= 0
     }
 
+    /** 从 ResultSet 解析 Plot 对象 */
+    private fun java.sql.ResultSet.toPlot(): Plot {
+        val plotTypeStr = try { getString("plot_type") } catch (_: Exception) { "FARMLAND" }
+        val plotLevel = try { getInt("plot_level") } catch (_: Exception) { 1 }
+        return Plot(
+            id = getLong("id"),
+            ownerUUID = UUID.fromString(getString("owner_uuid")),
+            gridX = getInt("grid_x"),
+            gridZ = getInt("grid_z"),
+            worldName = getString("world_name"),
+            minX = getInt("min_x"),
+            minZ = getInt("min_z"),
+            maxX = getInt("max_x"),
+            maxZ = getInt("max_z"),
+            size = getInt("size"),
+            plotType = try { PlotType.valueOf(plotTypeStr ?: "FARMLAND") } catch (_: Exception) { PlotType.FARMLAND },
+            plotLevel = plotLevel
+        )
+    }
+
     // ==================== plot_manager ====================
 
     override fun getPlotByOwner(uuid: UUID): Plot? {
         return plotsTable.select(dataSource) {
             where("owner_uuid" eq uuid.toString())
             limit(1)
-        }.firstOrNull {
-            Plot(
-                id = getLong("id"),
-                ownerUUID = UUID.fromString(getString("owner_uuid")),
-                gridX = getInt("grid_x"),
-                gridZ = getInt("grid_z"),
-                worldName = getString("world_name"),
-                minX = getInt("min_x"),
-                minZ = getInt("min_z"),
-                maxX = getInt("max_x"),
-                maxZ = getInt("max_z"),
-                size = getInt("size")
-            )
-        }
+        }.firstOrNull { toPlot() }
     }
 
     override fun getPlotById(id: Long): Plot? {
         return plotsTable.select(dataSource) {
             where("id" eq id)
             limit(1)
-        }.firstOrNull {
-            Plot(
-                id = getLong("id"),
-                ownerUUID = UUID.fromString(getString("owner_uuid")),
-                gridX = getInt("grid_x"),
-                gridZ = getInt("grid_z"),
-                worldName = getString("world_name"),
-                minX = getInt("min_x"),
-                minZ = getInt("min_z"),
-                maxX = getInt("max_x"),
-                maxZ = getInt("max_z"),
-                size = getInt("size")
-            )
-        }
+        }.firstOrNull { toPlot() }
     }
 
     override fun insertPlot(plot: Plot): Long {
         plotsTable.insert(dataSource,
             "owner_uuid", "grid_x", "grid_z", "world_name",
-            "min_x", "min_z", "max_x", "max_z", "size"
+            "min_x", "min_z", "max_x", "max_z", "size", "plot_type", "plot_level"
         ) {
             value(
                 plot.ownerUUID.toString(), plot.gridX, plot.gridZ, plot.worldName,
-                plot.minX, plot.minZ, plot.maxX, plot.maxZ, plot.size
+                plot.minX, plot.minZ, plot.maxX, plot.maxZ, plot.size,
+                plot.plotType.name, plot.plotLevel
             )
         }
         return plotsTable.select(dataSource) {
             where("owner_uuid" eq plot.ownerUUID.toString())
+            where("grid_x" eq plot.gridX)
+            where("grid_z" eq plot.gridZ)
             limit(1)
         }.firstOrNull { getLong("id") } ?: -1L
     }
@@ -370,20 +384,20 @@ class DatabaseMySQL : IDatabase {
 
     override fun getAllPlots(): List<Plot> {
         return plotsTable.select(dataSource) {
-        }.map {
-            Plot(
-                id = getLong("id"),
-                ownerUUID = UUID.fromString(getString("owner_uuid")),
-                gridX = getInt("grid_x"),
-                gridZ = getInt("grid_z"),
-                worldName = getString("world_name"),
-                minX = getInt("min_x"),
-                minZ = getInt("min_z"),
-                maxX = getInt("max_x"),
-                maxZ = getInt("max_z"),
-                size = getInt("size")
-            )
-        }
+        }.map { toPlot() }
+    }
+
+    override fun getPlotsByOwner(uuid: UUID): List<Plot> {
+        return plotsTable.select(dataSource) {
+            where("owner_uuid" eq uuid.toString())
+        }.map { toPlot() }
+    }
+
+    override fun getPlotsByOwnerAndType(uuid: UUID, type: PlotType): List<Plot> {
+        return plotsTable.select(dataSource) {
+            where("owner_uuid" eq uuid.toString())
+            where("plot_type" eq type.name)
+        }.map { toPlot() }
     }
 
     // ==================== farm_level_manager ====================
@@ -916,6 +930,42 @@ class DatabaseMySQL : IDatabase {
         return waterCooldownsTable.delete(dataSource) {
             where("waterer_uuid" eq watererUUID.toString())
             where("target_uuid" eq targetUUID.toString())
+        } > 0
+    }
+
+    // ==================== guard_pet_manager ====================
+
+    override fun getGuardPet(plotId: Long): DeployedGuardPet? {
+        return guardPetsTable.select(dataSource) {
+            where("plot_id" eq plotId)
+            limit(1)
+        }.firstOrNull {
+            DeployedGuardPet(
+                id = getLong("id"),
+                plotId = getLong("plot_id"),
+                ownerUUID = UUID.fromString(getString("owner_uuid")),
+                petTypeId = getString("pet_type_id"),
+                level = getInt("level")
+            )
+        }
+    }
+
+    override fun deployGuardPet(plotId: Long, ownerUUID: UUID, petTypeId: String, level: Int): Boolean {
+        return guardPetsTable.insert(dataSource, "plot_id", "owner_uuid", "pet_type_id", "level") {
+            value(plotId, ownerUUID.toString(), petTypeId, level)
+        } > 0
+    }
+
+    override fun updateGuardPetLevel(plotId: Long, newLevel: Int): Boolean {
+        return guardPetsTable.update(dataSource) {
+            where("plot_id" eq plotId)
+            set("level", newLevel)
+        } > 0
+    }
+
+    override fun removeGuardPet(plotId: Long): Boolean {
+        return guardPetsTable.delete(dataSource) {
+            where("plot_id" eq plotId)
         } > 0
     }
 }

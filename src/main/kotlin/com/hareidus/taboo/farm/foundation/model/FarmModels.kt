@@ -13,7 +13,9 @@ data class Plot(
     var minZ: Int,
     var maxX: Int,
     var maxZ: Int,
-    var size: Int
+    var size: Int,
+    val plotType: PlotType = PlotType.FARMLAND,
+    var plotLevel: Int = 1
 )
 
 /** 农场等级配置定义（从 config 加载） */
@@ -24,6 +26,7 @@ data class FarmLevelDefinition(
     val conditions: List<String>,
     val plotSizeIncrease: Int,
     val trapSlots: Int,
+    val guardPetSlots: Int,
     val decorationSlots: Int,
     val protectionLevel: Int,
     val stealRatioReduction: Double,

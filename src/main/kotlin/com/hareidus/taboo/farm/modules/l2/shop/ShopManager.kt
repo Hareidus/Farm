@@ -1,12 +1,14 @@
 package com.hareidus.taboo.farm.modules.l2.shop
 
 import com.hareidus.taboo.farm.foundation.model.StatisticType
+import com.hareidus.taboo.farm.foundation.api.events.PreCropSellEvent
 import com.hareidus.taboo.farm.modules.l1.crop.CropManager
 import com.hareidus.taboo.farm.modules.l1.economy.EconomyManager
 import com.hareidus.taboo.farm.modules.l1.playerdata.PlayerDataManager
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import taboolib.common.platform.function.warning
+import com.hareidus.taboo.farm.foundation.sound.SoundManager
 import taboolib.module.chat.colored
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
@@ -137,8 +139,14 @@ object ShopManager {
         // 计算总价
         val totalPrice = unitPrice * amount
 
+        // 触发出售前事件（可被外部插件取消或修改售价）
+        val preSellEvent = PreCropSellEvent(player, cropTypeId, amount, totalPrice)
+        preSellEvent.call()
+        if (preSellEvent.isCancelled) return false
+        val finalPrice = preSellEvent.sellPrice
+
         // 发放金币
-        if (!EconomyManager.deposit(player, totalPrice)) {
+        if (!EconomyManager.deposit(player, finalPrice)) {
             player.sendLang("shop-sell-failed-deposit")
             return false
         }
@@ -147,13 +155,14 @@ object ShopManager {
         removeMaterialFromInventory(player, harvestMaterial, amount)
 
         // 累加金币收入统计
-        PlayerDataManager.updateStatistic(uuid, StatisticType.TOTAL_COIN_INCOME, totalPrice)
+        PlayerDataManager.updateStatistic(uuid, StatisticType.TOTAL_COIN_INCOME, finalPrice)
 
         // 发布事件
-        CropSoldEvent(uuid, cropTypeId, amount, totalPrice).call()
+        CropSoldEvent(uuid, cropTypeId, amount, finalPrice).call()
 
         // 通知玩家
-        player.sendLang("shop-sell-success", amount, cropDef.name, String.format("%.2f", totalPrice))
+        player.sendLang("shop-sell-success", amount, cropDef.name, String.format("%.2f", finalPrice))
+        SoundManager.play(player, "shop-sell")
         return true
     }
 

@@ -19,7 +19,8 @@ data class CropDefinition(
     val harvestMaxAmount: Int,
     val seedItemId: String,
     val harvestItemId: String,
-    val totalGrowthTime: Long
+    val totalGrowthTime: Long,
+    val source: String = "config"  // "config" | "external"
 )
 
 /** 地块内一株具体作物的运行时数据 */

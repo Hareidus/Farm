@@ -4,7 +4,9 @@
 world-name: "farm_world"
 
 # 网格间距（地块中心之间的距离，单位：方块）
-grid-spacing: 64
+# 两地块边缘最小间距 = grid-spacing - 2 * initial-plot-size
+# 当前设置: 350 - 2 * 16 = 318 格（满足 300 格最小距离要求，且为升级扩地留有余量）
+grid-spacing: 350
 
 # 初始地块尺寸（半径，实际边长 = size * 2 + 1）
 initial-plot-size: 16
@@ -20,3 +22,17 @@ path-material: GRASS_BLOCK
 
 # 地块基础 Y 坐标
 base-y: 64
+
+# ==================== 多地块经营 ====================
+
+# 是否启用多地块经营（玩家可拥有多块不同类型的地块）
+multi-plot-enabled: false
+
+# 每个农场等级对应的最大地块数量
+# 格式: 等级: 最大地块数
+max-plots-per-level:
+  1: 1
+  2: 1
+  3: 2
+  4: 2
+  5: 3

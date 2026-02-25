@@ -1,6 +1,7 @@
 package com.hareidus.taboo.farm.modules.l1.trap
 
 import com.hareidus.taboo.farm.foundation.database.DatabaseManager
+import com.hareidus.taboo.farm.foundation.api.events.TrapDefinitionRegisteredEvent
 import com.hareidus.taboo.farm.foundation.model.DeployedTrap
 import com.hareidus.taboo.farm.foundation.model.TrapDefinition
 import com.hareidus.taboo.farm.foundation.model.TrapPenaltyType
@@ -34,7 +35,7 @@ object TrapManager {
         private set
 
     /** 陷阱定义缓存: id -> TrapDefinition */
-    private var trapDefinitions: Map<String, TrapDefinition> = emptyMap()
+    private var trapDefinitions: MutableMap<String, TrapDefinition> = mutableMapOf()
 
     @Awake(LifeCycle.ENABLE)
     fun init() {
@@ -75,7 +76,7 @@ object TrapManager {
                 conditions = sub.getStringList("conditions"),
                 penaltyValue = sub.getDouble("penalty-value", 0.0)
             )
-        }.toMap()
+        }.toMap().toMutableMap()
         info("已加载 ${trapDefinitions.size} 种陷阱定义")
     }
 
@@ -89,6 +90,33 @@ object TrapManager {
     /** 获取所有陷阱定义 */
     fun getAllTrapDefinitions(): List<TrapDefinition> {
         return trapDefinitions.values.toList()
+    }
+
+    // ==================== 运行时注册 API ====================
+
+    /**
+     * 运行时注册陷阱定义（外部插件调用）
+     * @return true 注册成功，false 已存在同 ID 定义
+     */
+    fun registerTrapDefinition(def: TrapDefinition): Boolean {
+        if (trapDefinitions.containsKey(def.id)) return false
+        val externalDef = if (def.source != "external") def.copy(source = "external") else def
+        trapDefinitions[externalDef.id] = externalDef
+        TrapDefinitionRegisteredEvent(externalDef).call()
+        info("[Farm] 外部注册陷阱定义: ${externalDef.id}")
+        return true
+    }
+
+    /**
+     * 运行时注销陷阱定义（仅允许移除 source="external" 的定义）
+     * @return true 注销成功，false 定义不存在或非外部注册
+     */
+    fun unregisterTrapDefinition(id: String): Boolean {
+        val def = trapDefinitions[id] ?: return false
+        if (def.source != "external") return false
+        trapDefinitions.remove(id)
+        info("[Farm] 外部注销陷阱定义: $id")
+        return true
     }
 
     // ==================== 部署管理 ====================
@@ -165,9 +193,15 @@ object TrapManager {
 
     // ==================== 重载 ====================
 
-    /** 重载配置 */
+    /** 重载配置（保留外部注册的定义） */
     fun reload() {
         config.reload()
+        val externalDefs = trapDefinitions.filter { it.value.source == "external" }
         loadTrapDefinitions()
+        for ((id, def) in externalDefs) {
+            if (!trapDefinitions.containsKey(id)) {
+                trapDefinitions[id] = def
+            }
+        }
     }
 }

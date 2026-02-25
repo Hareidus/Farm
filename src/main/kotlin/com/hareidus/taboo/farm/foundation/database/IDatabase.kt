@@ -34,6 +34,8 @@ interface IDatabase {
     fun updatePlotSize(plotId: Long, minX: Int, minZ: Int, maxX: Int, maxZ: Int, size: Int): Boolean
     fun deletePlot(plotId: Long): Boolean
     fun getAllPlots(): List<Plot>
+    fun getPlotsByOwner(uuid: UUID): List<Plot>
+    fun getPlotsByOwnerAndType(uuid: UUID, type: PlotType): List<Plot>
 
     // ==================== farm_level_manager ====================
 
@@ -102,4 +104,11 @@ interface IDatabase {
     fun getWaterCooldown(watererUUID: UUID, targetUUID: UUID): WaterCooldown?
     fun setWaterCooldown(watererUUID: UUID, targetUUID: UUID, cooldownEndTime: Long): Boolean
     fun removeWaterCooldown(watererUUID: UUID, targetUUID: UUID): Boolean
+
+    // ==================== guard_pet_manager ====================
+
+    fun getGuardPet(plotId: Long): DeployedGuardPet?
+    fun deployGuardPet(plotId: Long, ownerUUID: UUID, petTypeId: String, level: Int): Boolean
+    fun updateGuardPetLevel(plotId: Long, newLevel: Int): Boolean
+    fun removeGuardPet(plotId: Long): Boolean
 }

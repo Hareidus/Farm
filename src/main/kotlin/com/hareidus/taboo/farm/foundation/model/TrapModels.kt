@@ -9,7 +9,8 @@ data class TrapDefinition(
     val deployCostMoney: Double,
     val deployCostMaterials: Map<String, Int>,
     val conditions: List<String>,
-    val penaltyValue: Double
+    val penaltyValue: Double,
+    val source: String = "config"  // "config" | "external"
 )
 
 /** 地块内已部署的陷阱实例 */

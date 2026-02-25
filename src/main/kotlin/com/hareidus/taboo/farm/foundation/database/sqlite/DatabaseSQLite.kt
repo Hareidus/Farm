@@ -5,6 +5,7 @@ import com.hareidus.taboo.farm.foundation.database.DatabaseType
 import com.hareidus.taboo.farm.foundation.database.IDatabase
 import com.hareidus.taboo.farm.foundation.model.*
 import taboolib.common.platform.function.getDataFolder
+import taboolib.common.platform.function.warning
 import taboolib.module.database.*
 import java.io.File
 import java.util.UUID
@@ -37,6 +38,7 @@ class DatabaseSQLite : IDatabase {
     private val playerAchievementsTable: Table<Host<SQLite>, SQLite>
     private val farmStorageTable: Table<Host<SQLite>, SQLite>
     private val waterCooldownsTable: Table<Host<SQLite>, SQLite>
+    private val guardPetsTable: Table<Host<SQLite>, SQLite>
 
     init {
         val dbFile = File(getDataFolder(), "database/${MainConfig.sqliteFile}")
@@ -60,6 +62,7 @@ class DatabaseSQLite : IDatabase {
         playerAchievementsTable = createPlayerAchievementsTable()
         farmStorageTable = createFarmStorageTable()
         waterCooldownsTable = createWaterCooldownsTable()
+        guardPetsTable = createGuardPetsTable()
 
         createAllTables()
     }
@@ -74,6 +77,7 @@ class DatabaseSQLite : IDatabase {
         add("total_stolen") { type(ColumnTypeSQLite.INTEGER) }
         add("total_coin_income") { type(ColumnTypeSQLite.INTEGER) }
         add("trap_triggered_count") { type(ColumnTypeSQLite.INTEGER) }
+        add("guard_pet_caught_count") { type(ColumnTypeSQLite.INTEGER) }
         add("consecutive_login_days") { type(ColumnTypeSQLite.INTEGER) }
         add("last_login_date") { type(ColumnTypeSQLite.INTEGER) }
     }
@@ -98,6 +102,8 @@ class DatabaseSQLite : IDatabase {
         add("max_x") { type(ColumnTypeSQLite.INTEGER) }
         add("max_z") { type(ColumnTypeSQLite.INTEGER) }
         add("size") { type(ColumnTypeSQLite.INTEGER) }
+        add("plot_type") { type(ColumnTypeSQLite.TEXT) { def("FARMLAND") } }
+        add("plot_level") { type(ColumnTypeSQLite.INTEGER) { def(1) } }
     }
 
     private fun createPlayerLevelsTable() = Table("farm_player_levels", host) {
@@ -185,6 +191,14 @@ class DatabaseSQLite : IDatabase {
         add("cooldown_end_time") { type(ColumnTypeSQLite.INTEGER) }
     }
 
+    private fun createGuardPetsTable() = Table("farm_guard_pets", host) {
+        add { id() }
+        add("plot_id") { type(ColumnTypeSQLite.INTEGER) }
+        add("owner_uuid") { type(ColumnTypeSQLite.TEXT) }
+        add("pet_type_id") { type(ColumnTypeSQLite.TEXT) }
+        add("level") { type(ColumnTypeSQLite.INTEGER) }
+    }
+
     private fun createAllTables() {
         playerDataTable.workspace(dataSource) { createTable() }.run()
         offlineNotificationsTable.workspace(dataSource) { createTable() }.run()
@@ -200,6 +214,7 @@ class DatabaseSQLite : IDatabase {
         playerAchievementsTable.workspace(dataSource) { createTable() }.run()
         farmStorageTable.workspace(dataSource) { createTable() }.run()
         waterCooldownsTable.workspace(dataSource) { createTable() }.run()
+        guardPetsTable.workspace(dataSource) { createTable() }.run()
     }
 
     override fun close() {
@@ -220,6 +235,7 @@ class DatabaseSQLite : IDatabase {
                 totalStolen = getLong("total_stolen"),
                 totalCoinIncome = getLong("total_coin_income") / 100.0,
                 trapTriggeredCount = getInt("trap_triggered_count"),
+                guardPetCaughtCount = getInt("guard_pet_caught_count"),
                 consecutiveLoginDays = getInt("consecutive_login_days"),
                 lastLoginDate = getLong("last_login_date")
             )
@@ -229,9 +245,10 @@ class DatabaseSQLite : IDatabase {
     override fun insertPlayerData(uuid: UUID): Boolean {
         return playerDataTable.insert(dataSource,
             "uuid", "total_harvest", "total_steal", "total_stolen",
-            "total_coin_income", "trap_triggered_count", "consecutive_login_days", "last_login_date"
+            "total_coin_income", "trap_triggered_count", "guard_pet_caught_count",
+            "consecutive_login_days", "last_login_date"
         ) {
-            value(uuid.toString(), 0L, 0L, 0L, 0L, 0, 0, 0L)
+            value(uuid.toString(), 0L, 0L, 0L, 0L, 0, 0, 0, 0L)
         } > 0
     }
 
@@ -243,6 +260,7 @@ class DatabaseSQLite : IDatabase {
             set("total_stolen", data.totalStolen)
             set("total_coin_income", (data.totalCoinIncome * 100).toLong())
             set("trap_triggered_count", data.trapTriggeredCount)
+            set("guard_pet_caught_count", data.guardPetCaughtCount)
             set("consecutive_login_days", data.consecutiveLoginDays)
             set("last_login_date", data.lastLoginDate)
         } > 0
@@ -289,60 +307,57 @@ class DatabaseSQLite : IDatabase {
         } >= 0
     }
 
+    /** 从 ResultSet 解析 Plot 对象 */
+    private fun java.sql.ResultSet.toPlot(): Plot {
+        val plotTypeStr = try { getString("plot_type") } catch (_: Exception) { "FARMLAND" }
+        val plotLevel = try { getInt("plot_level") } catch (_: Exception) { 1 }
+        return Plot(
+            id = getLong("id"),
+            ownerUUID = UUID.fromString(getString("owner_uuid")),
+            gridX = getInt("grid_x"),
+            gridZ = getInt("grid_z"),
+            worldName = getString("world_name"),
+            minX = getInt("min_x"),
+            minZ = getInt("min_z"),
+            maxX = getInt("max_x"),
+            maxZ = getInt("max_z"),
+            size = getInt("size"),
+            plotType = try { PlotType.valueOf(plotTypeStr ?: "FARMLAND") } catch (_: Exception) { PlotType.FARMLAND },
+            plotLevel = plotLevel
+        )
+    }
+
     // ==================== plot_manager ====================
 
     override fun getPlotByOwner(uuid: UUID): Plot? {
         return plotsTable.select(dataSource) {
             where("owner_uuid" eq uuid.toString())
             limit(1)
-        }.firstOrNull {
-            Plot(
-                id = getLong("id"),
-                ownerUUID = UUID.fromString(getString("owner_uuid")),
-                gridX = getInt("grid_x"),
-                gridZ = getInt("grid_z"),
-                worldName = getString("world_name"),
-                minX = getInt("min_x"),
-                minZ = getInt("min_z"),
-                maxX = getInt("max_x"),
-                maxZ = getInt("max_z"),
-                size = getInt("size")
-            )
-        }
+        }.firstOrNull { toPlot() }
     }
 
     override fun getPlotById(id: Long): Plot? {
         return plotsTable.select(dataSource) {
             where("id" eq id)
             limit(1)
-        }.firstOrNull {
-            Plot(
-                id = getLong("id"),
-                ownerUUID = UUID.fromString(getString("owner_uuid")),
-                gridX = getInt("grid_x"),
-                gridZ = getInt("grid_z"),
-                worldName = getString("world_name"),
-                minX = getInt("min_x"),
-                minZ = getInt("min_z"),
-                maxX = getInt("max_x"),
-                maxZ = getInt("max_z"),
-                size = getInt("size")
-            )
-        }
+        }.firstOrNull { toPlot() }
     }
 
     override fun insertPlot(plot: Plot): Long {
         plotsTable.insert(dataSource,
             "owner_uuid", "grid_x", "grid_z", "world_name",
-            "min_x", "min_z", "max_x", "max_z", "size"
+            "min_x", "min_z", "max_x", "max_z", "size", "plot_type", "plot_level"
         ) {
             value(
                 plot.ownerUUID.toString(), plot.gridX, plot.gridZ, plot.worldName,
-                plot.minX, plot.minZ, plot.maxX, plot.maxZ, plot.size
+                plot.minX, plot.minZ, plot.maxX, plot.maxZ, plot.size,
+                plot.plotType.name, plot.plotLevel
             )
         }
         return plotsTable.select(dataSource) {
             where("owner_uuid" eq plot.ownerUUID.toString())
+            where("grid_x" eq plot.gridX)
+            where("grid_z" eq plot.gridZ)
             limit(1)
         }.firstOrNull { getLong("id") } ?: -1L
     }
@@ -366,20 +381,20 @@ class DatabaseSQLite : IDatabase {
 
     override fun getAllPlots(): List<Plot> {
         return plotsTable.select(dataSource) {
-        }.map {
-            Plot(
-                id = getLong("id"),
-                ownerUUID = UUID.fromString(getString("owner_uuid")),
-                gridX = getInt("grid_x"),
-                gridZ = getInt("grid_z"),
-                worldName = getString("world_name"),
-                minX = getInt("min_x"),
-                minZ = getInt("min_z"),
-                maxX = getInt("max_x"),
-                maxZ = getInt("max_z"),
-                size = getInt("size")
-            )
-        }
+        }.map { toPlot() }
+    }
+
+    override fun getPlotsByOwner(uuid: UUID): List<Plot> {
+        return plotsTable.select(dataSource) {
+            where("owner_uuid" eq uuid.toString())
+        }.map { toPlot() }
+    }
+
+    override fun getPlotsByOwnerAndType(uuid: UUID, type: PlotType): List<Plot> {
+        return plotsTable.select(dataSource) {
+            where("owner_uuid" eq uuid.toString())
+            where("plot_type" eq type.name)
+        }.map { toPlot() }
     }
 
     // ==================== farm_level_manager ====================
@@ -900,6 +915,42 @@ class DatabaseSQLite : IDatabase {
         return waterCooldownsTable.delete(dataSource) {
             where("waterer_uuid" eq watererUUID.toString())
             where("target_uuid" eq targetUUID.toString())
+        } > 0
+    }
+
+    // ==================== guard_pet_manager ====================
+
+    override fun getGuardPet(plotId: Long): DeployedGuardPet? {
+        return guardPetsTable.select(dataSource) {
+            where("plot_id" eq plotId)
+            limit(1)
+        }.firstOrNull {
+            DeployedGuardPet(
+                id = getLong("id"),
+                plotId = getLong("plot_id"),
+                ownerUUID = UUID.fromString(getString("owner_uuid")),
+                petTypeId = getString("pet_type_id"),
+                level = getInt("level")
+            )
+        }
+    }
+
+    override fun deployGuardPet(plotId: Long, ownerUUID: UUID, petTypeId: String, level: Int): Boolean {
+        return guardPetsTable.insert(dataSource, "plot_id", "owner_uuid", "pet_type_id", "level") {
+            value(plotId, ownerUUID.toString(), petTypeId, level)
+        } > 0
+    }
+
+    override fun updateGuardPetLevel(plotId: Long, newLevel: Int): Boolean {
+        return guardPetsTable.update(dataSource) {
+            where("plot_id" eq plotId)
+            set("level", newLevel)
+        } > 0
+    }
+
+    override fun removeGuardPet(plotId: Long): Boolean {
+        return guardPetsTable.delete(dataSource) {
+            where("plot_id" eq plotId)
         } > 0
     }
 }

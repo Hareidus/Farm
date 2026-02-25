@@ -1,6 +1,7 @@
 package com.hareidus.taboo.farm.modules.l1.crop
 
 import com.hareidus.taboo.farm.foundation.database.DatabaseManager
+import com.hareidus.taboo.farm.foundation.api.events.CropDefinitionRegisteredEvent
 import com.hareidus.taboo.farm.foundation.model.*
 import com.hareidus.taboo.farm.modules.l1.plot.PlotManager
 import org.bukkit.Bukkit
@@ -42,7 +43,7 @@ object CropManager {
         private set
 
     /** 作物定义缓存: id -> CropDefinition */
-    private var cropDefinitions: Map<String, CropDefinition> = emptyMap()
+    private var cropDefinitions: MutableMap<String, CropDefinition> = mutableMapOf()
 
     /** seedItemId -> cropTypeId 反查表 */
     private val seedToCropMap = ConcurrentHashMap<String, String>()
@@ -91,7 +92,7 @@ object CropManager {
             )
             seedToCropMap[seedItemId] = id
             id to def
-        }.toMap()
+        }.toMap().toMutableMap()
         info("[Farm] 已加载 ${cropDefinitions.size} 种作物定义")
     }
 
@@ -110,6 +111,35 @@ object CropManager {
     /** 根据种子物品 ID 查找对应的作物类型 ID */
     fun getCropTypeIdBySeed(seedItemId: String): String? {
         return seedToCropMap[seedItemId]
+    }
+
+    // ==================== 运行时注册 API ====================
+
+    /**
+     * 运行时注册作物定义（外部插件调用）
+     * @return true 注册成功，false 已存在同 ID 定义
+     */
+    fun registerCropDefinition(def: CropDefinition): Boolean {
+        if (cropDefinitions.containsKey(def.id)) return false
+        val externalDef = if (def.source != "external") def.copy(source = "external") else def
+        cropDefinitions[externalDef.id] = externalDef
+        seedToCropMap[externalDef.seedItemId] = externalDef.id
+        CropDefinitionRegisteredEvent(externalDef).call()
+        info("[Farm] 外部注册作物定义: ${externalDef.id}")
+        return true
+    }
+
+    /**
+     * 运行时注销作物定义（仅允许移除 source="external" 的定义）
+     * @return true 注销成功，false 定义不存在或非外部注册
+     */
+    fun unregisterCropDefinition(id: String): Boolean {
+        val def = cropDefinitions[id] ?: return false
+        if (def.source != "external") return false
+        cropDefinitions.remove(id)
+        seedToCropMap.remove(def.seedItemId)
+        info("[Farm] 外部注销作物定义: $id")
+        return true
     }
 
     // ==================== 数据查询 ====================
@@ -282,6 +312,19 @@ object CropManager {
         return true
     }
 
+    /**
+     * 重置作物生长（将 plantedAt 设为当前时间，作物回到初始阶段）
+     */
+    fun resetGrowth(cropId: Long): Boolean {
+        val crop = DatabaseManager.database.getCropById(cropId) ?: return false
+        val newPlantedAt = System.currentTimeMillis()
+        val updated = DatabaseManager.database.updateCropPlantedAt(cropId, newPlantedAt)
+        if (!updated) return false
+        crop.plantedAt = newPlantedAt
+        updateCropVisuals(crop)
+        return true
+    }
+
     // ==================== 视觉更新 ====================
 
     /** 更新单株作物的方块/头颅到当前生长阶段 */
@@ -380,9 +423,17 @@ object CropManager {
 
     // ==================== 重载 ====================
 
-    /** 重载配置 */
+    /** 重载配置（保留外部注册的定义） */
     fun reload() {
         config.reload()
+        val externalDefs = cropDefinitions.filter { it.value.source == "external" }
         loadCropDefinitions()
+        // 恢复外部注册的定义
+        for ((id, def) in externalDefs) {
+            if (!cropDefinitions.containsKey(id)) {
+                cropDefinitions[id] = def
+                seedToCropMap[def.seedItemId] = id
+            }
+        }
     }
 }
